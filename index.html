@@ -784,7 +784,16 @@ function buildBoleta(datos,nombre) {
   return html;
 }
 
+let pronosticoEnviado = false;
+
 async function enviarPronóstico() {
+  if(pronosticoEnviado) {
+    alert('Ya enviaste tu pronóstico. Si querés corregir algo, contactá al admin.');
+    return;
+  }
+  const btn = document.querySelector('button[onclick="enviarPronóstico()"]');
+  if(btn) { btn.disabled=true; btn.textContent='Enviando...'; }
+
   const datos={nombre:state.nombre,timestamp:Date.now(),resultados:state.resultados,argentina:state.argentina,
     clasificados:state.clasificados,terceros:state.terceros,octavos:state.octavos,cuartos:state.cuartos,
     semis:state.semis,podio:state.podio,puntos:0};
@@ -792,13 +801,17 @@ async function enviarPronóstico() {
     try {
       const key=state.nombre.replace(/\s+/g,'_')+'_'+Date.now();
       await window._fbSet(window._fbRef(window._fbDb,'pronosticos/'+key),datos);
+      pronosticoEnviado=true;
+      if(btn) { btn.textContent='✅ Pronóstico enviado'; btn.style.background='#2e7d32'; }
       alert('✅ ¡Pronóstico enviado! Ya aparecés en el ranking.');
       switchTab('ranking'); return;
     } catch(e) {
+      if(btn) { btn.disabled=false; btn.textContent='✅ ENVIAR PRONÓSTICO'; }
       document.getElementById('btn-whatsapp').style.display='flex';
       alert('Hubo un problema con el envío. Usá el botón de WhatsApp como respaldo.');
     }
   } else {
+    if(btn) { btn.disabled=false; btn.textContent='✅ ENVIAR PRONÓSTICO'; }
     document.getElementById('btn-whatsapp').style.display='flex';
     alert('Sin conexión a la base de datos. Usá el botón de WhatsApp como respaldo.');
   }
@@ -929,6 +942,7 @@ function renderTablaDoble(jugadores) {
     const rterceros=resultadosReales.terceros||[];
     const hayDatos=Object.keys(rr).length>0||rterceros.filter(Boolean).length>0;
     if(!hayDatos){html+=`<div class="ranking-empty">El admin todavía no cargó los clasificados reales.</div>`;body.innerHTML=html;return;}
+    html+='<div style="padding:8px 10px;font-size:11px;color:var(--gris)"><span style="color:#2e7d32;font-weight:900">✓ verde</span> = equipo y posición (3pts) &nbsp;·&nbsp; <span style="color:#1565c0;font-weight:700">✓ azul</span> = solo equipo (2pts) &nbsp;·&nbsp; <span style="color:#c0392b">✗</span> = no acertó (0pts)</div>';
     html+='<div class="tabla-wrap"><table class="tabla-doble"><thead><tr>';
     html+='<th class="jugador-col">Jugador</th><th class="pts-col">Pts</th>';
     Object.keys(GRUPOS).forEach(g=>html+=`<th>G-${g}<br><span style="font-size:9px;opacity:0.7">1°·2°</span></th>`);
@@ -938,12 +952,19 @@ function renderTablaDoble(jugadores) {
       html+=`<tr><td class="jugador-col">${j.nombre}</td><td class="pts-col">${j.pts}</td>`;
       Object.keys(GRUPOS).forEach(g=>{
         const r=rr[g]||{};const p=(j.datos.clasificados||{})[g]||{};
-        const ok1=r.pos1&&p.pos1===r.pos1,ok2=r.pos2&&p.pos2===r.pos2;
-        const semi1=r.pos1&&[r.pos1,r.pos2].includes(p.pos1)&&!ok1;
-        const semi2=r.pos2&&[r.pos1,r.pos2].includes(p.pos2)&&!ok2;
-        const c1=ok1?'cel-ok':semi1?'cel-nd':'cel-no';
-        const c2=ok2?'cel-ok':semi2?'cel-nd':'cel-no';
-        html+=`<td><span class="${c1}">${p.pos1?'✓':'—'}</span><br><span class="${c2}">${p.pos2?'✓':'—'}</span></td>`;
+        // pos1
+        let cel1;
+        if(!p.pos1) cel1='<td class="cel-nd">—</td>';
+        else if(r.pos1&&p.pos1===r.pos1) cel1='<td style="color:#2e7d32;font-weight:900">✓</td>';
+        else if(r.pos1&&[r.pos1,r.pos2].filter(Boolean).includes(p.pos1)) cel1='<td style="color:#1565c0;font-weight:700">✓</td>';
+        else cel1='<td class="cel-no">✗</td>';
+        // pos2
+        let cel2;
+        if(!p.pos2) cel2='<td class="cel-nd">—</td>';
+        else if(r.pos2&&p.pos2===r.pos2) cel2='<td style="color:#2e7d32;font-weight:900">✓</td>';
+        else if(r.pos2&&[r.pos1,r.pos2].filter(Boolean).includes(p.pos2)) cel2='<td style="color:#1565c0;font-weight:700">✓</td>';
+        else cel2='<td class="cel-no">✗</td>';
+        html+=`<td style="padding:2px">${cel1.replace('<td','<div style="display:inline-block"').replace('</td>','</div>')} ${cel2.replace('<td','<div style="display:inline-block"').replace('</td>','</div>')}</td>`;
       });
       const realT=new Set(rterceros.filter(Boolean));
       for(let i=0;i<8;i++){
