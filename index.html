@@ -40,12 +40,12 @@
 
 <style>
 :root {
-  --verde: #006341;
-  --verde-claro: #008a55;
-  --oro: #c9a84c;
-  --oro-claro: #f0c96b;
+  --verde: #0a1628;
+  --verde-claro: #1a2a4a;
+  --oro: #B22234;
+  --oro-claro: #e05060;
   --rojo: #c0392b;
-  --azul: #1a3a6b;
+  --azul: #0a1628;
   --azul-claro: #2d5499;
   --fondo: #f4f1eb;
   --blanco: #ffffff;
@@ -57,7 +57,7 @@
 body { font-family: 'Inter', sans-serif; background: var(--fondo); color: var(--texto); min-height: 100vh; padding-bottom: 80px; }
 
 /* HEADER */
-.header { background: var(--verde); color: white; padding: 16px 16px 12px; text-align: center; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+.header { background: #0a1628; color: white; padding: 16px 16px 12px; text-align: center; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
 .header-title { font-family: 'Bebas Neue', sans-serif; font-size: 28px; letter-spacing: 2px; line-height: 1; }
 .header-by { font-size: 11px; opacity: 0.7; letter-spacing: 2px; text-transform: uppercase; margin-top: 2px; }
 .progress-bar { background: rgba(255,255,255,0.2); height: 3px; margin-top: 10px; border-radius: 2px; overflow: hidden; }
@@ -65,9 +65,9 @@ body { font-family: 'Inter', sans-serif; background: var(--fondo); color: var(--
 .step-label { font-size: 10px; opacity: 0.7; margin-top: 4px; letter-spacing: 0.5px; }
 
 /* NAV TABS */
-.nav-tabs { display: flex; background: var(--azul); }
+.nav-tabs { display: flex; background: #1a2a4a; }
 .nav-tab { flex: 1; padding: 10px 4px; text-align: center; font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.6); cursor: pointer; letter-spacing: 0.5px; text-transform: uppercase; border-bottom: 3px solid transparent; transition: all 0.2s; }
-.nav-tab.active { color: var(--oro-claro); border-bottom-color: var(--oro-claro); }
+.nav-tab.active { color: #e05060; border-bottom-color: #e05060; }
 
 /* SCREENS */
 .screen { display: none; }
@@ -84,7 +84,7 @@ body { font-family: 'Inter', sans-serif; background: var(--fondo); color: var(--
 .info-card h3 { font-size: 13px; font-weight: 800; color: var(--verde); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
 .info-card p, .info-card li { font-size: 13px; color: var(--gris); line-height: 1.6; }
 .info-card ul { padding-left: 16px; }
-.deadline-card { background: var(--azul); color: white; border-radius: 12px; padding: 14px 18px; margin-bottom: 10px; text-align: center; }
+.deadline-card { background: #1a2a4a; color: white; border-radius: 12px; padding: 14px 18px; margin-bottom: 10px; text-align: center; }
 .deadline-card strong { font-size: 17px; display: block; margin-top: 4px; }
 .deadline-card p { font-size: 13px; opacity: 0.85; }
 .name-section { padding: 0 0 0; }
@@ -93,7 +93,7 @@ body { font-family: 'Inter', sans-serif; background: var(--fondo); color: var(--
 .name-section input:focus { border-color: var(--verde); }
 
 /* =================== BUTTONS =================== */
-.btn-primary { display: block; width: 100%; padding: 15px; background: var(--verde); color: white; font-family: 'Inter', sans-serif; font-size: 15px; font-weight: 800; border: none; border-radius: 12px; cursor: pointer; text-align: center; letter-spacing: 0.5px; transition: background 0.2s, transform 0.1s; margin-top: 14px; }
+.btn-primary { display: block; width: 100%; padding: 15px; background: #0a1628; color: white; font-family: 'Inter', sans-serif; font-size: 15px; font-weight: 800; border: none; border-radius: 12px; cursor: pointer; text-align: center; letter-spacing: 0.5px; transition: background 0.2s, transform 0.1s; margin-top: 14px; }
 .btn-primary:active { transform: scale(0.98); }
 .btn-primary:disabled { background: #ccc; cursor: not-allowed; }
 .btn-secondary { display: block; width: 100%; padding: 13px; background: white; color: var(--verde); font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 700; border: 2px solid var(--verde); border-radius: 12px; cursor: pointer; text-align: center; margin-top: 10px; }
@@ -101,7 +101,7 @@ body { font-family: 'Inter', sans-serif; background: var(--fondo); color: var(--
 .btn-rojo { background: var(--rojo); color: white; border-color: var(--rojo); }
 
 /* =================== PARTIDOS =================== */
-.section-header { background: var(--verde); color: white; padding: 12px 16px; font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 1px; display: flex; align-items: center; gap: 8px; }
+.section-header { background: #0a1628; color: white; padding: 12px 16px; font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 1px; display: flex; align-items: center; gap: 8px; }
 .section-header .badge { background: var(--oro); color: var(--texto); font-size: 11px; font-family: 'Inter', sans-serif; font-weight: 700; padding: 2px 8px; border-radius: 20px; }
 .section-subtitle { background: var(--gris-claro); padding: 8px 16px; font-size: 12px; color: var(--gris); line-height: 1.5; }
 .sticky-counter { position: sticky; top: 90px; z-index: 50; background: var(--oro); color: var(--azul); padding: 5px 16px; font-size: 12px; font-weight: 800; text-align: center; }
@@ -133,7 +133,7 @@ body { font-family: 'Inter', sans-serif; background: var(--fondo); color: var(--
 
 /* =================== CLASIFICADOS =================== */
 .grupo-card { background: white; border-radius: 10px; margin-bottom: 12px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
-.grupo-header { background: var(--azul); color: white; padding: 9px 14px; font-weight: 800; font-size: 13px; }
+.grupo-header { background: #1a2a4a; color: white; padding: 9px 14px; font-weight: 800; font-size: 13px; }
 .clasificado-row { display: flex; align-items: center; padding: 9px 12px; border-bottom: 1px solid var(--gris-claro); gap: 8px; }
 .clasificado-row:last-child { border-bottom: none; }
 .clasificado-pos { width: 26px; height: 26px; border-radius: 50%; font-size: 12px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
@@ -146,7 +146,7 @@ body { font-family: 'Inter', sans-serif; background: var(--fondo); color: var(--
 
 /* =================== EQUIPOS LISTA =================== */
 .equipo-row { background: white; border-radius: 10px; padding: 10px 12px; margin-bottom: 7px; display: flex; align-items: center; gap: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.07); }
-.equipo-num { width: 26px; height: 26px; background: var(--verde); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; flex-shrink: 0; }
+.equipo-num { width: 26px; height: 26px; background: #0a1628; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; flex-shrink: 0; }
 .equipo-select { flex: 1; border: 1.5px solid var(--gris-claro); border-radius: 8px; padding: 9px 28px 9px 10px; font-size: 14px; font-family: 'Inter', sans-serif; background: white url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23666' stroke-width='1.5' fill='none'/%3E%3C/svg%3E") no-repeat right 9px center; color: var(--texto); outline: none; -webkit-appearance: none; }
 .equipo-select:focus { border-color: var(--verde); }
 
@@ -230,14 +230,14 @@ body { font-family: 'Inter', sans-serif; background: var(--fondo); color: var(--
 .resumen-hero p { font-size: 14px; opacity: 0.85; margin-top: 6px; }
 .send-warning { background: #fff8e1; border: 1px solid #f0c030; border-radius: 10px; padding: 12px 14px; margin: 12px 12px 0; font-size: 13px; color: #7a5000; line-height: 1.5; }
 .btn-whatsapp { display: flex; align-items: center; justify-content: center; gap: 10px; width: calc(100% - 24px); margin: 10px 12px 0; padding: 15px; background: #25D366; color: white; font-family: 'Inter', sans-serif; font-size: 15px; font-weight: 800; border: none; border-radius: 12px; cursor: pointer; }
-.btn-print { display: flex; align-items: center; justify-content: center; gap: 8px; width: calc(100% - 24px); margin: 10px 12px 0; padding: 14px; background: var(--azul); color: white; font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 700; border: none; border-radius: 12px; cursor: pointer; }
+.btn-print { display: flex; align-items: center; justify-content: center; gap: 8px; width: calc(100% - 24px); margin: 10px 12px 0; padding: 14px; background: #1a2a4a; color: white; font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 700; border: none; border-radius: 12px; cursor: pointer; }
 
 /* =================== NAV BOTTOM =================== */
 .nav-bottom { position: fixed; bottom: 0; left: 0; right: 0; background: white; border-top: 1px solid var(--gris-claro); padding: 10px 14px 14px; display: flex; gap: 8px; z-index: 100; }
 .nav-btn { flex: 1; padding: 12px; border: none; border-radius: 10px; font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 800; cursor: pointer; transition: background 0.2s, transform 0.1s; }
 .nav-btn:active { transform: scale(0.97); }
 .nav-btn.prev { background: var(--gris-claro); color: var(--gris); }
-.nav-btn.next { background: var(--verde); color: white; }
+.nav-btn.next { background: #0a1628; color: white; }
 .nav-btn:disabled { opacity: 0.35; cursor: not-allowed; }
 
 /* MISC */
@@ -278,8 +278,8 @@ body { font-family: 'Inter', sans-serif; background: var(--fondo); color: var(--
 
 <!-- SCREEN 0: BIENVENIDA -->
 <div class="screen active" id="screen-0">
-  <div class="welcome-hero">
-    <div class="welcome-trophy">🏆</div>
+  <div class="welcome-hero" style="background: linear-gradient(135deg, #0a1628 0%, #1a2a4a 100%);">
+    <div style="margin-bottom:12px"><img src="alfredo.png" alt="Alfredo El Calamar" style="width:120px;height:120px;border-radius:50%;border:3px solid #B22234;object-fit:cover;" onerror="this.style.display='none'"></div>
     <div class="welcome-title">MUNDIAL USA 2026</div>
     <div class="welcome-subtitle">El prode del grupo. El único. El de siempre.</div>
     <div class="adlt-badge">by Alfredo De La Torre</div>
