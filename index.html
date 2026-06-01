@@ -327,7 +327,20 @@ body { font-family: 'Inter', sans-serif; background: var(--fondo); color: var(--
     <p id="resumen-nombre-txt">Revisá todo antes de enviar</p>
   </div>
   <div class="send-warning">⚠️ <strong>Todavía no enviaste tu pronóstico.</strong> Revisá tu boleta y tocá el botón azul para enviarlo.</div>
-  <button class="btn-edit" onclick="goTo(1)">✏️ Volver a editar desde el principio</button>
+  <div style="padding:10px 12px 0">
+    <div style="font-size:12px;font-weight:800;color:#0a1628;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px">✏️ Ir a corregir:</div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px">
+      <button onclick="goTo(1)" style="padding:7px 12px;background:white;border:2px solid #0a1628;border-radius:8px;font-family:Inter,sans-serif;font-size:12px;font-weight:700;color:#0a1628;cursor:pointer">Jornada 1</button>
+      <button onclick="goTo(2)" style="padding:7px 12px;background:white;border:2px solid #0a1628;border-radius:8px;font-family:Inter,sans-serif;font-size:12px;font-weight:700;color:#0a1628;cursor:pointer">Jornada 2</button>
+      <button onclick="goTo(3)" style="padding:7px 12px;background:white;border:2px solid #0a1628;border-radius:8px;font-family:Inter,sans-serif;font-size:12px;font-weight:700;color:#0a1628;cursor:pointer">Jornada 3</button>
+      <button onclick="goTo(4)" style="padding:7px 12px;background:white;border:2px solid #B22234;border-radius:8px;font-family:Inter,sans-serif;font-size:12px;font-weight:700;color:#B22234;cursor:pointer">Argentina</button>
+      <button onclick="goTo(5)" style="padding:7px 12px;background:white;border:2px solid #0a1628;border-radius:8px;font-family:Inter,sans-serif;font-size:12px;font-weight:700;color:#0a1628;cursor:pointer">Clasificados</button>
+      <button onclick="goTo(6)" style="padding:7px 12px;background:white;border:2px solid #0a1628;border-radius:8px;font-family:Inter,sans-serif;font-size:12px;font-weight:700;color:#0a1628;cursor:pointer">Octavos</button>
+      <button onclick="goTo(7)" style="padding:7px 12px;background:white;border:2px solid #0a1628;border-radius:8px;font-family:Inter,sans-serif;font-size:12px;font-weight:700;color:#0a1628;cursor:pointer">Cuartos</button>
+      <button onclick="goTo(8)" style="padding:7px 12px;background:white;border:2px solid #0a1628;border-radius:8px;font-family:Inter,sans-serif;font-size:12px;font-weight:700;color:#0a1628;cursor:pointer">Semis</button>
+      <button onclick="goTo(9)" style="padding:7px 12px;background:white;border:2px solid #c9a84c;border-radius:8px;font-family:Inter,sans-serif;font-size:12px;font-weight:700;color:#5a3e00;cursor:pointer">Podio</button>
+    </div>
+  </div>
   <div style="padding:8px 12px 0;display:flex;gap:8px;">
     <button style="flex:1;padding:12px;background:#1a2a4a;color:white;border:none;border-radius:10px;font-family:'Inter',sans-serif;font-size:13px;font-weight:700;cursor:pointer" onclick="window.print()">🖨️ Imprimir / PDF</button>
     <button style="flex:1;padding:12px;background:#0a1628;color:white;border:none;border-radius:10px;font-family:'Inter',sans-serif;font-size:13px;font-weight:700;cursor:pointer" onclick="enviarPronóstico()">✅ ENVIAR PRONÓSTICO</button>
@@ -458,8 +471,15 @@ function switchTab(tab) {
 }
 
 function goTo(n) {
+  // Save terceros from DOM before leaving screen 5
+  if(currentScreen===5) {
+    const selects=document.querySelectorAll('[id^="tercero-sel-"]');
+    selects.forEach(sel=>{const idx=parseInt(sel.id.replace('tercero-sel-',''));state.terceros[idx]=sel.value;});
+  }
   document.querySelectorAll('#tab-prode-content .screen').forEach(s=>s.classList.remove('active'));
   document.getElementById('screen-'+n).classList.add('active');
+  // Re-render grupos+terceros when returning to screen 5 to show saved values
+  if(n===5) { renderGrupos(); renderTerceros(); }
   currentScreen=n; window.scrollTo(0,0); updateProgress();
 }
 
@@ -587,6 +607,10 @@ function renderGrupos() {
 }
 
 function renderTerceros() {
+  // Save current values from DOM before re-render
+  const selects=document.querySelectorAll('[id^="tercero-sel-"]');
+  selects.forEach(sel=>{const idx=parseInt(sel.id.replace('tercero-sel-',''));state.terceros[idx]=sel.value;});
+  
   const container=document.getElementById('grupos-grid');
   const sec=document.createElement('div');sec.className='terceros-section';
   sec.innerHTML=`<div class="terceros-header">🥉 8 Mejores Terceros (de toda la fase de grupos)</div>`;
@@ -601,7 +625,7 @@ function renderTerceros() {
     });
     row.innerHTML=`<div class="clasificado-pos pos-3">${i+1}</div>
       <div class="clasificado-label">Mejor 3° #${i+1}</div>
-      <select class="clasificado-select" onchange="setTercero(${i},this.value)">
+      <select class="clasificado-select" id="tercero-sel-${i}" onchange="setTercero(${i},this.value)">
         <option value="">— Elegir —</option>${opts}</select>`;
     sec.appendChild(row);
   }
@@ -789,28 +813,148 @@ function renderRankingList(jugadores) {
   body.innerHTML=html;
 }
 
+let tablaVista = 'j1';
+
 function renderTablaDoble(jugadores) {
   const body=document.getElementById('ranking-body');
-  const partidosJugados=PARTIDOS.filter(p=>(resultadosReales.resultados||{})[p.n]);
-  let html='<div class="tabla-wrap"><table class="tabla-doble"><thead><tr>';
-  html+='<th class="jugador-col">Jugador</th><th class="pts-col">Pts</th>';
-  partidosJugados.slice(0,30).forEach(p=>html+=`<th>P${p.n}</th>`);
-  html+='</tr></thead><tbody>';
-  jugadores.forEach(j=>{
-    html+=`<tr><td class="jugador-col">${j.nombre}</td><td class="pts-col">${j.pts}</td>`;
-    partidosJugados.slice(0,30).forEach(p=>{
-      const real=(resultadosReales.resultados||{})[p.n];
-      const pred=(j.datos.resultados||{})[p.n];
-      if(!pred) html+='<td class="cel-nd">—</td>';
-      else if(pred===real) html+='<td class="cel-ok">✓</td>';
-      else html+='<td class="cel-no">✗</td>';
-    });
-    html+='</tr>';
+
+  const vistas = [
+    {id:'j1',label:'Jornada 1'},{id:'j2',label:'Jornada 2'},{id:'j3',label:'Jornada 3'},
+    {id:'clas',label:'16avos'},{id:'oct',label:'Octavos'},{id:'cuar',label:'Cuartos'},
+    {id:'semi',label:'Semis'},{id:'podio',label:'Podio'}
+  ];
+
+  let html=`<div style="display:flex;gap:5px;padding:10px 10px 0;flex-wrap:wrap">`;
+  vistas.forEach(v=>{
+    const activo=tablaVista===v.id;
+    html+=`<button onclick="cambiarVistaTabla('${v.id}')" style="padding:6px 12px;border:2px solid #0a1628;border-radius:8px;background:${activo?'#0a1628':'white'};color:${activo?'white':'#0a1628'};font-family:Inter,sans-serif;font-size:11px;font-weight:700;cursor:pointer;margin-bottom:4px">${v.label}</button>`;
   });
-  html+='</tbody></table></div>';
-  if(partidosJugados.length>30) html+=`<p style="font-size:11px;color:var(--gris);text-align:center;padding:8px">Mostrando los primeros 30 partidos jugados</p>`;
+  html+='</div>';
+
+  // Jornadas de grupos
+  if(['j1','j2','j3'].includes(tablaVista)) {
+    const jNum={'j1':1,'j2':2,'j3':3}[tablaVista];
+    const inicio=(jNum-1)*24;
+    const partidosFiltro=PARTIDOS.slice(inicio,inicio+24);
+    const partidosJugados=partidosFiltro.filter(p=>(resultadosReales.resultados||{})[p.n]);
+    if(partidosJugados.length===0){
+      html+=`<div class="ranking-empty">Ningún partido de la Jornada ${jNum} fue jugado todavía.</div>`;
+      body.innerHTML=html; return;
+    }
+    html+='<div class="tabla-wrap"><table class="tabla-doble"><thead><tr>';
+    html+='<th class="jugador-col">Jugador</th><th class="pts-col">Pts</th>';
+    partidosJugados.forEach(p=>html+=`<th>P${p.n}<br><span style="font-size:9px;opacity:0.7">${p.l.split(' ')[0]}-${p.e.split(' ')[0]}</span></th>`);
+    html+='</tr></thead><tbody>';
+    jugadores.forEach(j=>{
+      html+=`<tr><td class="jugador-col">${j.nombre}</td><td class="pts-col">${j.pts}</td>`;
+      partidosJugados.forEach(p=>{
+        const real=(resultadosReales.resultados||{})[p.n];
+        const pred=(j.datos.resultados||{})[p.n];
+        if(!pred) html+='<td class="cel-nd">—</td>';
+        else if(pred===real) html+='<td class="cel-ok">✓</td>';
+        else html+='<td class="cel-no">✗</td>';
+      });
+      html+='</tr>';
+    });
+    html+='</tbody></table></div>';
+    html+=`<p style="font-size:11px;color:var(--gris);text-align:center;padding:8px">Jornada ${jNum} · ${partidosJugados.length} de 24 partidos jugados</p>`;
+  }
+
+  // Clasificados a 16avos
+  else if(tablaVista==='clas') {
+    const rr=resultadosReales.clasificados||{};
+    const rterceros=resultadosReales.terceros||[];
+    const hayDatos=Object.keys(rr).length>0||rterceros.filter(Boolean).length>0;
+    if(!hayDatos){html+=`<div class="ranking-empty">El admin todavía no cargó los clasificados reales.</div>`;body.innerHTML=html;return;}
+    html+='<div class="tabla-wrap"><table class="tabla-doble"><thead><tr>';
+    html+='<th class="jugador-col">Jugador</th><th class="pts-col">Pts</th>';
+    Object.keys(GRUPOS).forEach(g=>html+=`<th>G-${g}<br><span style="font-size:9px;opacity:0.7">1°·2°</span></th>`);
+    for(let i=0;i<8;i++) html+=`<th>3°${i+1}</th>`;
+    html+='</tr></thead><tbody>';
+    jugadores.forEach(j=>{
+      html+=`<tr><td class="jugador-col">${j.nombre}</td><td class="pts-col">${j.pts}</td>`;
+      Object.keys(GRUPOS).forEach(g=>{
+        const r=rr[g]||{};const p=(j.datos.clasificados||{})[g]||{};
+        const ok1=r.pos1&&p.pos1===r.pos1,ok2=r.pos2&&p.pos2===r.pos2;
+        const semi1=r.pos1&&[r.pos1,r.pos2].includes(p.pos1)&&!ok1;
+        const semi2=r.pos2&&[r.pos1,r.pos2].includes(p.pos2)&&!ok2;
+        const c1=ok1?'cel-ok':semi1?'cel-nd':'cel-no';
+        const c2=ok2?'cel-ok':semi2?'cel-nd':'cel-no';
+        html+=`<td><span class="${c1}">${p.pos1?'✓':'—'}</span><br><span class="${c2}">${p.pos2?'✓':'—'}</span></td>`;
+      });
+      const realT=new Set(rterceros.filter(Boolean));
+      for(let i=0;i<8;i++){
+        const pred=(j.datos.terceros||[])[i];
+        if(!pred) html+='<td class="cel-nd">—</td>';
+        else if(realT.has(pred)) html+='<td class="cel-ok">✓</td>';
+        else html+='<td class="cel-no">✗</td>';
+      }
+      html+='</tr>';
+    });
+    html+='</tbody></table></div>';
+  }
+
+  // Octavos / Cuartos / Semis
+  else if(['oct','cuar','semi'].includes(tablaVista)) {
+    const keyMap={oct:'octavos',cuar:'cuartos',semi:'semis'};
+    const labelMap={oct:'Octavos (16)',cuar:'Cuartos (8)',semi:'Semis (4)'};
+    const countMap={oct:16,cuar:8,semi:4};
+    const key=keyMap[tablaVista];
+    const realArr=resultadosReales[key]||[];
+    if(!realArr.filter(Boolean).length){html+=`<div class="ranking-empty">El admin todavía no cargó los ${labelMap[tablaVista]} reales.</div>`;body.innerHTML=html;return;}
+    const realSet=new Set(realArr.filter(Boolean));
+    const count=countMap[tablaVista];
+    html+='<div class="tabla-wrap"><table class="tabla-doble"><thead><tr>';
+    html+='<th class="jugador-col">Jugador</th><th class="pts-col">Pts</th>';
+    for(let i=0;i<count;i++) html+=`<th>#${i+1}</th>`;
+    html+='</tr></thead><tbody>';
+    jugadores.forEach(j=>{
+      html+=`<tr><td class="jugador-col">${j.nombre}</td><td class="pts-col">${j.pts}</td>`;
+      const pred=(j.datos[key]||[]);
+      for(let i=0;i<count;i++){
+        const eq=pred[i];
+        if(!eq) html+='<td class="cel-nd">—</td>';
+        else if(realSet.has(eq)) html+='<td class="cel-ok">✓</td>';
+        else html+='<td class="cel-no">✗</td>';
+      }
+      html+='</tr>';
+    });
+    html+='</tbody></table></div>';
+  }
+
+  // Podio
+  else if(tablaVista==='podio') {
+    const rp=resultadosReales.podio||{};
+    if(!Object.keys(rp).length){html+=`<div class="ranking-empty">El admin todavía no cargó el podio real.</div>`;body.innerHTML=html;return;}
+    const labels={1:'🥇 Campeón',2:'🥈 Sub',3:'🥉 3°',4:'4°'};
+    html+='<div class="tabla-wrap"><table class="tabla-doble"><thead><tr>';
+    html+='<th class="jugador-col">Jugador</th><th class="pts-col">Pts</th>';
+    [1,2,3,4].forEach(i=>html+=`<th>${labels[i]}</th>`);
+    html+='</tr></thead><tbody>';
+    jugadores.forEach(j=>{
+      html+=`<tr><td class="jugador-col">${j.nombre}</td><td class="pts-col">${j.pts}</td>`;
+      [1,2,3,4].forEach(i=>{
+        const pred=(j.datos.podio||{})[i];
+        if(!pred) html+='<td class="cel-nd">—</td>';
+        else if(pred===rp[i]) html+='<td class="cel-ok">✓</td>';
+        else html+='<td class="cel-no">✗</td>';
+      });
+      html+='</tr>';
+    });
+    html+='</tbody></table></div>';
+  }
+
   body.innerHTML=html;
 }
+
+function cambiarVistaTabla(vista) {
+  tablaVista=vista;
+  const jugadores=Object.entries(rankingData).map(([key,datos])=>({key,nombre:datos.nombre,pts:calcularPuntos(datos),datos}));
+  jugadores.sort((a,b)=>b.pts-a.pts);
+  renderTablaDoble(jugadores);
+}
+
+function cambiarJornada(n) { cambiarVistaTabla('j'+n); }
 
 function verJugador(key) {
   viewingJugador=key;const datos=rankingData[key];if(!datos)return;
