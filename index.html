@@ -982,14 +982,16 @@ function renderTablaDoble(jugadores) {
         const realTercSet=new Set((resultadosReales.terceros||[]).filter(Boolean));
         const realClasG=new Set([r.pos1,r.pos2,...(GRUPOS[g].equipos.filter(eq=>realTercSet.has(eq)))].filter(Boolean));
         // pos1
+        let cel1;
+        if(!p.pos1) cel1='<td class="cel-nd">—</td>';
         else if(r.pos1&&p.pos1===r.pos1) cel1='<td style="color:#2e7d32;font-weight:900">✓</td>';
-        else if(p.pos1&&realClasG.has(p.pos1)) cel1='<td style="color:#1565c0;font-weight:700">✓</td>';
+        else if(realClasG.has(p.pos1)) cel1='<td style="color:#1565c0;font-weight:700">✓</td>';
         else cel1='<td class="cel-no">✗</td>';
         // pos2
         let cel2;
         if(!p.pos2) cel2='<td class="cel-nd">—</td>';
         else if(r.pos2&&p.pos2===r.pos2) cel2='<td style="color:#2e7d32;font-weight:900">✓</td>';
-        else if(p.pos2&&realClasG.has(p.pos2)) cel2='<td style="color:#1565c0;font-weight:700">✓</td>';
+        else if(realClasG.has(p.pos2)) cel2='<td style="color:#1565c0;font-weight:700">✓</td>';
         else cel2='<td class="cel-no">✗</td>';
         html+=`<td style="padding:2px">${cel1.replace('<td','<div style="display:inline-block"').replace('</td>','</div>')} ${cel2.replace('<td','<div style="display:inline-block"').replace('</td>','</div>')}</td>`;
       });
