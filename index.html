@@ -392,6 +392,59 @@ body { font-family: 'Inter', sans-serif; background: var(--fondo); color: var(--
 
 <script>
 const ADMIN_PASSWORD = 'adlt2026';
+const FLAGS = {
+  'México': '🇲🇽',
+  'Sudáfrica': '🇿🇦',
+  'Corea del Sur': '🇰🇷',
+  'Rep. Checa': '🇨🇿',
+  'Canadá': '🇨🇦',
+  'Bosnia': '🇧🇦',
+  'Qatar': '🇶🇦',
+  'Suiza': '🇨🇭',
+  'Brasil': '🇧🇷',
+  'Marruecos': '🇲🇦',
+  'Haití': '🇭🇹',
+  'Escocia': '🏴󠁧󠁢󠁳󠁣󠁴󠁿',
+  'USA': '🇺🇸',
+  'Paraguay': '🇵🇾',
+  'Australia': '🇦🇺',
+  'Turquía': '🇹🇷',
+  'Alemania': '🇩🇪',
+  'Curaçao': '🇨🇼',
+  'Costa de Marfil': '🇨🇮',
+  'Ecuador': '🇪🇨',
+  'Holanda': '🇳🇱',
+  'Japón': '🇯🇵',
+  'Suecia': '🇸🇪',
+  'Túnez': '🇹🇳',
+  'España': '🇪🇸',
+  'Cabo Verde': '🇨🇻',
+  'Arabia Saudita': '🇸🇦',
+  'Uruguay': '🇺🇾',
+  'Bélgica': '🇧🇪',
+  'Egipto': '🇪🇬',
+  'Irán': '🇮🇷',
+  'Nueva Zelanda': '🇳🇿',
+  'Francia': '🇫🇷',
+  'Senegal': '🇸🇳',
+  'Irak': '🇮🇶',
+  'Noruega': '🇳🇴',
+  'Argentina': '🇦🇷',
+  'Argelia': '🇩🇿',
+  'Austria': '🇦🇹',
+  'Jordania': '🇯🇴',
+  'Portugal': '🇵🇹',
+  'Congo RD': '🇨🇩',
+  'Uzbekistán': '🇺🇿',
+  'Colombia': '🇨🇴',
+  'Inglaterra': '🏴󠁧󠁢󠁥󠁮󠁧󠁿',
+  'Croacia': '🇭🇷',
+  'Ghana': '🇬🇭',
+  'Panamá': '🇵🇦',
+};
+
+function fl(team) { return (FLAGS[team]||'')+' '+team; }
+
 const TODOS_LOS_EQUIPOS = ['Alemania','Argelia','Argentina','Arabia Saudita','Australia','Austria','Bélgica','Bosnia','Brasil','Cabo Verde','Canadá','Colombia','Congo RD','Corea del Sur','Costa de Marfil','Croacia','Curaçao','Ecuador','Egipto','Escocia','España','Francia','Ghana','Haití','Holanda','Inglaterra','Irak','Irán','Japón','Jordania','Marruecos','México','Nueva Zelanda','Noruega','Panamá','Paraguay','Portugal','Qatar','Rep. Checa','Senegal','Sudáfrica','Suecia','Suiza','Túnez','Turquía','Uruguay','USA','Uzbekistán'].sort();
 const GRUPOS = {
   A:{nombre:'Grupo A',equipos:['México','Sudáfrica','Corea del Sur','Rep. Checa']},
@@ -512,11 +565,11 @@ function renderMatches() {
       const cur=state.resultados[p.n]||'';
       const card=document.createElement('div');card.className='match-card';card.id='mc-'+p.n;
       card.innerHTML=`<div class="match-date">Partido ${p.n} · ${p.f}</div>
-        <div class="match-teams"><div class="team-name">${p.l}</div><div class="vs">VS</div><div class="team-name right">${p.e}</div></div>
+        <div class="match-teams"><div class="team-name">${fl(p.l)}</div><div class="vs">VS</div><div class="team-name right">${fl(p.e)}</div></div>
         <div class="match-buttons">
-          <button class="match-btn ${cur==='L'?'selected-L':''}" onclick="setResult(${p.n},'L',${etapa})"><span class="btn-label">GANA</span>${p.l.split(' ')[0]}</button>
+          <button class="match-btn ${cur==='L'?'selected-L':''}" onclick="setResult(${p.n},'L',${etapa})"><span class="btn-label">GANA</span>${FLAGS[p.l]||''} ${p.l.split(' ')[0]}</button>
           <button class="match-btn ${cur==='E'?'selected-E':''}" onclick="setResult(${p.n},'E',${etapa})"><span class="btn-label">RESULTADO</span>EMPATE</button>
-          <button class="match-btn ${cur==='V'?'selected-V':''}" onclick="setResult(${p.n},'V',${etapa})"><span class="btn-label">GANA</span>${p.e.split(' ')[0]}</button>
+          <button class="match-btn ${cur==='V'?'selected-V':''}" onclick="setResult(${p.n},'V',${etapa})"><span class="btn-label">GANA</span>${FLAGS[p.e]||''} ${p.e.split(' ')[0]}</button>
         </div>`;
       container.appendChild(card);
     });
@@ -547,7 +600,7 @@ function renderArgentina() {
   container.innerHTML='';
   PARTIDOS_ARG.forEach(p => {
     const sc=state.argentina[p.id];
-    const argLabel=p.argLocal?'🇦🇷 ARG':'🇦🇷 ARG (visit.)';
+    const argLabel=p.argLocal?'🇦🇷 Argentina':'🇦🇷 Argentina (visit.)';
     const rivLabel=p.rival.toUpperCase();
     const argKey=p.argLocal?'arg':'rival';
     const rivKey=p.argLocal?'rival':'arg';
@@ -595,7 +648,7 @@ function renderGrupos() {
     ].forEach(p => {
       const row=document.createElement('div');row.className='clasificado-row';
       const curVal=state.clasificados[g][p.pos]||'';
-      const opts=grupo.equipos.map(eq=>`<option value="${eq}" ${curVal===eq?'selected':''}>${eq}</option>`).join('');
+      const opts=grupo.equipos.map(eq=>`<option value="${eq}" ${curVal===eq?'selected':''}>${(FLAGS[eq]||'')+' '+eq}</option>`).join('');
       row.innerHTML=`<div class="clasificado-pos ${p.cls}">${p.txt}</div>
         <div class="clasificado-label">${p.label}</div>
         <select class="clasificado-select" onchange="setClasificado('${g}','${p.pos}',this.value)">
@@ -640,7 +693,7 @@ function renderEquiposLista(containerId,count,stateKey) {
   for(let i=0;i<count;i++) {
     const row=document.createElement('div');row.className='equipo-row';
     const curVal=state[stateKey][i]||'';
-    const opts=TODOS_LOS_EQUIPOS.map(eq=>`<option value="${eq}" ${curVal===eq?'selected':''}>${eq}</option>`).join('');
+    const opts=TODOS_LOS_EQUIPOS.map(eq=>`<option value="${eq}" ${curVal===eq?'selected':''}>${(FLAGS[eq]||'')+' '+eq}</option>`).join('');
     row.innerHTML=`<div class="equipo-num">${i+1}</div>
       <select class="equipo-select" onchange="setEquipo('${stateKey}',${i},this.value)">
         <option value="">— Elegir equipo —</option>${opts}</select>`;
@@ -657,7 +710,7 @@ function renderPodio() {
    {num:4,label:'CUARTO PUESTO',pts:'7 puntos',cls:'podio-4'}
   ].forEach(p => {
     const curVal=state.podio[p.num]||'';
-    const opts=TODOS_LOS_EQUIPOS.map(eq=>`<option value="${eq}" ${curVal===eq?'selected':''}>${eq}</option>`).join('');
+    const opts=TODOS_LOS_EQUIPOS.map(eq=>`<option value="${eq}" ${curVal===eq?'selected':''}>${(FLAGS[eq]||'')+' '+eq}</option>`).join('');
     const card=document.createElement('div');card.className=`podio-card ${p.cls}`;
     card.innerHTML=`<div class="podio-header"><div><div class="podio-title">${p.label}</div><div class="podio-pts">Vale ${p.pts}</div></div></div>
       <div class="podio-select-wrap"><select class="equipo-select" onchange="setPodio(${p.num},this.value)">
@@ -701,7 +754,7 @@ function buildBoleta(datos,nombre) {
       if(res==='L'){resTxt=p.l.split(' ')[0];resCls='res-L';}
       else if(res==='E'){resTxt='Empate';resCls='res-E';}
       else if(res==='V'){resTxt=p.e.split(' ')[0];resCls='res-V';}
-      html+=`<div class="boleta-partido-row"><span class="boleta-num">${p.n}</span><span class="boleta-equipos">${p.l} vs ${p.e}</span><span class="boleta-resultado ${resCls}">${resTxt}</span></div>`;
+      html+=`<div class="boleta-partido-row"><span class="boleta-num">${p.n}</span><span class="boleta-equipos">${fl(p.l)} vs ${fl(p.e)}</span><span class="boleta-resultado ${resCls}">${resTxt}</span></div>`;
     });
     html+='</div>';
   });
@@ -1024,7 +1077,7 @@ async function renderAdminPanel() {
     card.innerHTML=`<div class="resultado-match-title">${grupo.nombre}</div>`;
     [{pos:'pos1',label:'1°'},{pos:'pos2',label:'2°'}].forEach(p=>{
       const curVal=realCl[p.pos]||'';
-      const opts=grupo.equipos.map(eq=>`<option value="${eq}" ${curVal===eq?'selected':''}>${eq}</option>`).join('');
+      const opts=grupo.equipos.map(eq=>`<option value="${eq}" ${curVal===eq?'selected':''}>${(FLAGS[eq]||'')+' '+eq}</option>`).join('');
       const row=document.createElement('div');row.style.cssText='display:flex;align-items:center;gap:8px;margin-top:6px';
       row.innerHTML=`<span style="font-size:12px;font-weight:700;width:20px">${p.label}</span>
         <select class="clasificado-select" style="flex:1" onchange="guardarClasReal('${g}','${p.pos}',this.value)">
@@ -1056,7 +1109,7 @@ async function renderAdminPanel() {
     const card=document.createElement('div');card.className='resultado-card';
     for(let i=0;i<count;i++){
       const curVal=((resultadosReales[key])||[])[i]||'';
-      const opts=TODOS_LOS_EQUIPOS.map(eq=>`<option value="${eq}" ${curVal===eq?'selected':''}>${eq}</option>`).join('');
+      const opts=TODOS_LOS_EQUIPOS.map(eq=>`<option value="${eq}" ${curVal===eq?'selected':''}>${(FLAGS[eq]||'')+' '+eq}</option>`).join('');
       const row=document.createElement('div');row.style.cssText='display:flex;align-items:center;gap:8px;margin-top:6px';
       row.innerHTML=`<span style="font-size:12px;font-weight:700;width:20px">${i+1}</span>
         <select class="equipo-select" style="flex:1" onchange="guardarEtapaReal('${key}',${i},this.value)">
@@ -1072,7 +1125,7 @@ async function renderAdminPanel() {
   const cardPodio=document.createElement('div');cardPodio.className='resultado-card';
   [{num:1,label:'🥇 Campeón'},{num:2,label:'🥈 Subcampeón'},{num:3,label:'🥉 3er puesto'},{num:4,label:'4° puesto'}].forEach(p=>{
     const curVal=((resultadosReales.podio)||{})[p.num]||'';
-    const opts=TODOS_LOS_EQUIPOS.map(eq=>`<option value="${eq}" ${curVal===eq?'selected':''}>${eq}</option>`).join('');
+    const opts=TODOS_LOS_EQUIPOS.map(eq=>`<option value="${eq}" ${curVal===eq?'selected':''}>${(FLAGS[eq]||'')+' '+eq}</option>`).join('');
     const row=document.createElement('div');row.style.cssText='display:flex;align-items:center;gap:8px;margin-top:8px';
     row.innerHTML=`<span style="font-size:13px;font-weight:700;width:110px">${p.label}</span>
       <select class="equipo-select" style="flex:1" onchange="guardarPodioReal(${p.num},this.value)">
