@@ -392,58 +392,29 @@ body { font-family: 'Inter', sans-serif; background: var(--fondo); color: var(--
 
 <script>
 const ADMIN_PASSWORD = 'adlt2026';
-const FLAGS = {
-  'México': '🇲🇽',
-  'Sudáfrica': '🇿🇦',
-  'Corea del Sur': '🇰🇷',
-  'Rep. Checa': '🇨🇿',
-  'Canadá': '🇨🇦',
-  'Bosnia': '🇧🇦',
-  'Qatar': '🇶🇦',
-  'Suiza': '🇨🇭',
-  'Brasil': '🇧🇷',
-  'Marruecos': '🇲🇦',
-  'Haití': '🇭🇹',
-  'Escocia': '🏴󠁧󠁢󠁳󠁣󠁴󠁿',
-  'USA': '🇺🇸',
-  'Paraguay': '🇵🇾',
-  'Australia': '🇦🇺',
-  'Turquía': '🇹🇷',
-  'Alemania': '🇩🇪',
-  'Curaçao': '🇨🇼',
-  'Costa de Marfil': '🇨🇮',
-  'Ecuador': '🇪🇨',
-  'Holanda': '🇳🇱',
-  'Japón': '🇯🇵',
-  'Suecia': '🇸🇪',
-  'Túnez': '🇹🇳',
-  'España': '🇪🇸',
-  'Cabo Verde': '🇨🇻',
-  'Arabia Saudita': '🇸🇦',
-  'Uruguay': '🇺🇾',
-  'Bélgica': '🇧🇪',
-  'Egipto': '🇪🇬',
-  'Irán': '🇮🇷',
-  'Nueva Zelanda': '🇳🇿',
-  'Francia': '🇫🇷',
-  'Senegal': '🇸🇳',
-  'Irak': '🇮🇶',
-  'Noruega': '🇳🇴',
-  'Argentina': '🇦🇷',
-  'Argelia': '🇩🇿',
-  'Austria': '🇦🇹',
-  'Jordania': '🇯🇴',
-  'Portugal': '🇵🇹',
-  'Congo RD': '🇨🇩',
-  'Uzbekistán': '🇺🇿',
-  'Colombia': '🇨🇴',
-  'Inglaterra': '🏴󠁧󠁢󠁥󠁮󠁧󠁿',
-  'Croacia': '🇭🇷',
-  'Ghana': '🇬🇭',
-  'Panamá': '🇵🇦',
+const FLAG_CODES = {
+  'México':'mx','Sudáfrica':'za','Corea del Sur':'kr','Rep. Checa':'cz',
+  'Canadá':'ca','Bosnia':'ba','Qatar':'qa','Suiza':'ch',
+  'Brasil':'br','Marruecos':'ma','Haití':'ht','Escocia':'gb-sct',
+  'USA':'us','Paraguay':'py','Australia':'au','Turquía':'tr',
+  'Alemania':'de','Curaçao':'cw','Costa de Marfil':'ci','Ecuador':'ec',
+  'Holanda':'nl','Japón':'jp','Suecia':'se','Túnez':'tn',
+  'España':'es','Cabo Verde':'cv','Arabia Saudita':'sa','Uruguay':'uy',
+  'Bélgica':'be','Egipto':'eg','Irán':'ir','Nueva Zelanda':'nz',
+  'Francia':'fr','Senegal':'sn','Irak':'iq','Noruega':'no',
+  'Argentina':'ar','Argelia':'dz','Austria':'at','Jordania':'jo',
+  'Portugal':'pt','Congo RD':'cd','Uzbekistán':'uz','Colombia':'co',
+  'Inglaterra':'gb-eng','Croacia':'hr','Ghana':'gh','Panamá':'pa'
 };
+const FLAGS = FLAG_CODES;
 
-function fl(team) { return (FLAGS[team]||'')+' '+team; }
+function flagImg(team, size=20) {
+  const code = FLAG_CODES[team];
+  if(!code) return '';
+  return `<img src="https://flagcdn.com/${size}x${Math.round(size*0.75)}/${code}.png" style="width:${size}px;height:${Math.round(size*0.75)}px;vertical-align:middle;border-radius:2px;margin-right:4px" onerror="this.style.display='none'">`;
+}
+
+function fl(team) { return flagImg(team)+team; }
 
 const TODOS_LOS_EQUIPOS = ['Alemania','Argelia','Argentina','Arabia Saudita','Australia','Austria','Bélgica','Bosnia','Brasil','Cabo Verde','Canadá','Colombia','Congo RD','Corea del Sur','Costa de Marfil','Croacia','Curaçao','Ecuador','Egipto','Escocia','España','Francia','Ghana','Haití','Holanda','Inglaterra','Irak','Irán','Japón','Jordania','Marruecos','México','Nueva Zelanda','Noruega','Panamá','Paraguay','Portugal','Qatar','Rep. Checa','Senegal','Sudáfrica','Suecia','Suiza','Túnez','Turquía','Uruguay','USA','Uzbekistán'].sort();
 const GRUPOS = {
@@ -523,11 +494,26 @@ function switchTab(tab) {
   updateProgress();
 }
 
+function capturarTerceros() {
+  for(let i=0;i<8;i++){
+    const sel=document.getElementById('tercero-sel-'+i);
+    if(sel) state.terceros[i]=sel.value; // save even empty to reflect user clearing
+  }
+  console.log('Terceros capturados:', JSON.stringify(state.terceros));
+}
+
 function goTo(n) {
-  // Save terceros from DOM before leaving screen 5
+  // Always save terceros from DOM before navigating
+  capturarTerceros();
+  // Also save clasificados
   if(currentScreen===5) {
-    const selects=document.querySelectorAll('[id^="tercero-sel-"]');
-    selects.forEach(sel=>{const idx=parseInt(sel.id.replace('tercero-sel-',''));state.terceros[idx]=sel.value;});
+    Object.keys(GRUPOS).forEach(g=>{
+      if(!state.clasificados[g]) state.clasificados[g]={};
+      ['pos1','pos2'].forEach(pos=>{
+        const sel=document.querySelector(`select[onchange="setClasificado('${g}','${pos}',this.value)"]`);
+        if(sel) state.clasificados[g][pos]=sel.value;
+      });
+    });
   }
   document.querySelectorAll('#tab-prode-content .screen').forEach(s=>s.classList.remove('active'));
   document.getElementById('screen-'+n).classList.add('active');
@@ -567,9 +553,9 @@ function renderMatches() {
       card.innerHTML=`<div class="match-date">Partido ${p.n} · ${p.f}</div>
         <div class="match-teams"><div class="team-name">${fl(p.l)}</div><div class="vs">VS</div><div class="team-name right">${fl(p.e)}</div></div>
         <div class="match-buttons">
-          <button class="match-btn ${cur==='L'?'selected-L':''}" onclick="setResult(${p.n},'L',${etapa})"><span class="btn-label">GANA</span>${FLAGS[p.l]||''} ${p.l.split(' ')[0]}</button>
+          <button class="match-btn ${cur==='L'?'selected-L':''}" onclick="setResult(${p.n},'L',${etapa})"><span class="btn-label">GANA</span>${flagImg(p.l,16)} ${p.l.split(' ')[0]}</button>
           <button class="match-btn ${cur==='E'?'selected-E':''}" onclick="setResult(${p.n},'E',${etapa})"><span class="btn-label">RESULTADO</span>EMPATE</button>
-          <button class="match-btn ${cur==='V'?'selected-V':''}" onclick="setResult(${p.n},'V',${etapa})"><span class="btn-label">GANA</span>${FLAGS[p.e]||''} ${p.e.split(' ')[0]}</button>
+          <button class="match-btn ${cur==='V'?'selected-V':''}" onclick="setResult(${p.n},'V',${etapa})"><span class="btn-label">GANA</span>${flagImg(p.e,16)} ${p.e.split(' ')[0]}</button>
         </div>`;
       container.appendChild(card);
     });
@@ -648,7 +634,7 @@ function renderGrupos() {
     ].forEach(p => {
       const row=document.createElement('div');row.className='clasificado-row';
       const curVal=state.clasificados[g][p.pos]||'';
-      const opts=grupo.equipos.map(eq=>`<option value="${eq}" ${curVal===eq?'selected':''}>${(FLAGS[eq]||'')+' '+eq}</option>`).join('');
+      const opts=grupo.equipos.map(eq=>`<option value="${eq}" ${curVal===eq?'selected':''}>${eq}</option>`).join('');
       row.innerHTML=`<div class="clasificado-pos ${p.cls}">${p.txt}</div>
         <div class="clasificado-label">${p.label}</div>
         <select class="clasificado-select" onchange="setClasificado('${g}','${p.pos}',this.value)">
@@ -660,13 +646,13 @@ function renderGrupos() {
 }
 
 function renderTerceros() {
-  // Save current values from DOM before re-render
-  const selects=document.querySelectorAll('[id^="tercero-sel-"]');
-  selects.forEach(sel=>{const idx=parseInt(sel.id.replace('tercero-sel-',''));state.terceros[idx]=sel.value;});
-  
   const container=document.getElementById('grupos-grid');
+  // Remove existing terceros section if present
+  const existing=container.querySelector('.terceros-section');
+  if(existing) existing.remove();
+  
   const sec=document.createElement('div');sec.className='terceros-section';
-  sec.innerHTML=`<div class="terceros-header">🥉 8 Mejores Terceros (de toda la fase de grupos)</div>`;
+  sec.innerHTML=`<div class="terceros-header">🥉 8 Mejores Terceros — elegí los 8 equipos que terminen terceros y clasifiquen</div>`;
   for(let i=0;i<8;i++) {
     const row=document.createElement('div');row.className='clasificado-row';
     const curVal=state.terceros[i]||'';
@@ -686,14 +672,17 @@ function renderTerceros() {
 }
 
 function setClasificado(g,pos,val) {if(!state.clasificados[g])state.clasificados[g]={};state.clasificados[g][pos]=val;}
-function setTercero(idx,val) {state.terceros[idx]=val;}
+function setTercero(idx,val) {
+  state.terceros[idx]=val;
+  console.log('Tercero '+idx+' = '+val, state.terceros);
+}
 
 function renderEquiposLista(containerId,count,stateKey) {
   const container=document.getElementById(containerId);container.innerHTML='';
   for(let i=0;i<count;i++) {
     const row=document.createElement('div');row.className='equipo-row';
     const curVal=state[stateKey][i]||'';
-    const opts=TODOS_LOS_EQUIPOS.map(eq=>`<option value="${eq}" ${curVal===eq?'selected':''}>${(FLAGS[eq]||'')+' '+eq}</option>`).join('');
+    const opts=TODOS_LOS_EQUIPOS.map(eq=>`<option value="${eq}" ${curVal===eq?'selected':''}>${eq}</option>`).join('');
     row.innerHTML=`<div class="equipo-num">${i+1}</div>
       <select class="equipo-select" onchange="setEquipo('${stateKey}',${i},this.value)">
         <option value="">— Elegir equipo —</option>${opts}</select>`;
@@ -710,7 +699,7 @@ function renderPodio() {
    {num:4,label:'CUARTO PUESTO',pts:'7 puntos',cls:'podio-4'}
   ].forEach(p => {
     const curVal=state.podio[p.num]||'';
-    const opts=TODOS_LOS_EQUIPOS.map(eq=>`<option value="${eq}" ${curVal===eq?'selected':''}>${(FLAGS[eq]||'')+' '+eq}</option>`).join('');
+    const opts=TODOS_LOS_EQUIPOS.map(eq=>`<option value="${eq}" ${curVal===eq?'selected':''}>${eq}</option>`).join('');
     const card=document.createElement('div');card.className=`podio-card ${p.cls}`;
     card.innerHTML=`<div class="podio-header"><div><div class="podio-title">${p.label}</div><div class="podio-pts">Vale ${p.pts}</div></div></div>
       <div class="podio-select-wrap"><select class="equipo-select" onchange="setPodio(${p.num},this.value)">
@@ -721,6 +710,26 @@ function renderPodio() {
 function setPodio(num,val) {state.podio[num]=val;}
 
 function mostrarBoleta() {
+  // Capture all current DOM values before building boleta
+  // Terceros - read from DOM if on screen 5, otherwise use state
+  capturarTerceros();
+  // Clasificados
+  Object.keys(GRUPOS).forEach(g=>{
+    if(!state.clasificados[g]) state.clasificados[g]={};
+    ['pos1','pos2'].forEach(pos=>{
+      const sel=document.querySelector(`select[onchange="setClasificado('${g}','${pos}',this.value)"]`);
+      if(sel) state.clasificados[g][pos]=sel.value;
+    });
+  });
+  // Octavos/cuartos/semis/podio
+  ['octavos','cuartos','semis'].forEach(key=>{
+    const sels=document.querySelectorAll(`select[onchange^="setEquipo('${key}"]`);
+    sels.forEach((sel,i)=>{ state[key][i]=sel.value; });
+  });
+  [1,2,3,4].forEach(i=>{
+    const sel=document.querySelector(`select[onchange="setPodio(${i},this.value)"]`);
+    if(sel) state.podio[i]=sel.value;
+  });
   document.getElementById('resumen-nombre-txt').textContent=`${state.nombre}, revisá tu pronóstico completo`;
   document.getElementById('boleta-preview').innerHTML=buildBoleta(state,state.nombre);
   goTo(10);
@@ -764,8 +773,9 @@ function buildBoleta(datos,nombre) {
     html+=`<div class="boleta-partido-row"><span class="boleta-num" style="width:auto;padding-right:6px">${g}</span><span class="boleta-equipos">1°: ${cl.pos1||'—'} · 2°: ${cl.pos2||'—'}</span></div>`;
   });
   html+='</div>';
-  html+=`<div class="boleta-section"><div class="boleta-section-title">8 Mejores Terceros</div>`;
-  html+=`<div style="font-size:12px;line-height:1.8">${terceros.filter(Boolean).join(' · ')||'—'}</div></div>`;
+  const tercerosValidos=terceros.filter(Boolean);
+  html+=`<div class="boleta-section"><div class="boleta-section-title">8 Mejores Terceros (${tercerosValidos.length}/8)</div>`;
+  html+=`<div style="font-size:12px;line-height:1.8">${tercerosValidos.length>0?tercerosValidos.join(' · '):'— (no elegidos)'}</div></div>`;
   [['Octavos',octavos],['Cuartos',cuartos],['Semis',semis]].forEach(([label,arr])=>{
     html+=`<div class="boleta-section"><div class="boleta-section-title">${label}</div>`;
     html+=`<div style="font-size:12px;line-height:1.8">${arr.filter(Boolean).join(' · ')||'—'}</div></div>`;
@@ -874,7 +884,7 @@ function renderTablaDoble(jugadores) {
   const vistas = [
     {id:'j1',label:'Jornada 1'},{id:'j2',label:'Jornada 2'},{id:'j3',label:'Jornada 3'},
     {id:'clas',label:'16avos'},{id:'oct',label:'Octavos'},{id:'cuar',label:'Cuartos'},
-    {id:'semi',label:'Semis'},{id:'podio',label:'Podio'}
+    {id:'semi',label:'Semis'},{id:'podio',label:'Podio'},{id:'arg',label:'🇦🇷 Argentina'}
   ];
 
   let html=`<div style="display:flex;gap:5px;padding:10px 10px 0;flex-wrap:wrap">`;
@@ -997,6 +1007,36 @@ function renderTablaDoble(jugadores) {
     html+='</tbody></table></div>';
   }
 
+  // Argentina exacto
+  else if(tablaVista==='arg') {
+    const ra=resultadosReales.argentina||{};
+    const partLabels={arg1:'vs Argelia (local)',arg2:'vs Austria (local)',arg3:'vs Jordania (visita)'};
+    html+='<div class="tabla-wrap"><table class="tabla-doble"><thead><tr>';
+    html+='<th class="jugador-col">Jugador</th><th class="pts-col">Pts</th>';
+    ['arg1','arg2','arg3'].forEach(id=>html+=`<th>ARG<br><span style="font-size:9px;opacity:0.7">${partLabels[id]}</span></th>`);
+    html+='</tr></thead><tbody>';
+    jugadores.forEach(j=>{
+      let ptsArg=0;
+      html+=`<tr><td class="jugador-col">${j.nombre}</td>`;
+      const cells=[];
+      ['arg1','arg2','arg3'].forEach(id=>{
+        const real=ra[id];const pred=(j.datos.argentina||{})[id];
+        if(!real||!pred){cells.push('<td class="cel-nd">—</td>');}
+        else if(real.arg===pred.arg&&real.rival===pred.rival){
+          const marcador=id==='arg3'?`${pred.rival}-${pred.arg}`:`${pred.arg}-${pred.rival}`;
+          cells.push(`<td class="cel-ok">✓<br><span style="font-size:10px">${marcador}</span></td>`);
+          ptsArg+=3;
+        } else {
+          const marcador=id==='arg3'?`${pred.rival}-${pred.arg}`:`${pred.arg}-${pred.rival}`;
+          cells.push(`<td class="cel-no">✗<br><span style="font-size:10px">${marcador}</span></td>`);
+        }
+      });
+      html+=`<td class="pts-col">${ptsArg}</td>${cells.join('')}</tr>`;
+    });
+    html+='</tbody></table></div>';
+    html+='<p style="font-size:11px;color:var(--gris);text-align:center;padding:8px">✓ = marcador exacto acertado (3 pts) · ✗ = no acertado · se muestra el marcador pronosticado</p>';
+  }
+
   body.innerHTML=html;
 }
 
@@ -1077,7 +1117,7 @@ async function renderAdminPanel() {
     card.innerHTML=`<div class="resultado-match-title">${grupo.nombre}</div>`;
     [{pos:'pos1',label:'1°'},{pos:'pos2',label:'2°'}].forEach(p=>{
       const curVal=realCl[p.pos]||'';
-      const opts=grupo.equipos.map(eq=>`<option value="${eq}" ${curVal===eq?'selected':''}>${(FLAGS[eq]||'')+' '+eq}</option>`).join('');
+      const opts=grupo.equipos.map(eq=>`<option value="${eq}" ${curVal===eq?'selected':''}>${eq}</option>`).join('');
       const row=document.createElement('div');row.style.cssText='display:flex;align-items:center;gap:8px;margin-top:6px';
       row.innerHTML=`<span style="font-size:12px;font-weight:700;width:20px">${p.label}</span>
         <select class="clasificado-select" style="flex:1" onchange="guardarClasReal('${g}','${p.pos}',this.value)">
@@ -1109,7 +1149,7 @@ async function renderAdminPanel() {
     const card=document.createElement('div');card.className='resultado-card';
     for(let i=0;i<count;i++){
       const curVal=((resultadosReales[key])||[])[i]||'';
-      const opts=TODOS_LOS_EQUIPOS.map(eq=>`<option value="${eq}" ${curVal===eq?'selected':''}>${(FLAGS[eq]||'')+' '+eq}</option>`).join('');
+      const opts=TODOS_LOS_EQUIPOS.map(eq=>`<option value="${eq}" ${curVal===eq?'selected':''}>${eq}</option>`).join('');
       const row=document.createElement('div');row.style.cssText='display:flex;align-items:center;gap:8px;margin-top:6px';
       row.innerHTML=`<span style="font-size:12px;font-weight:700;width:20px">${i+1}</span>
         <select class="equipo-select" style="flex:1" onchange="guardarEtapaReal('${key}',${i},this.value)">
@@ -1125,7 +1165,7 @@ async function renderAdminPanel() {
   const cardPodio=document.createElement('div');cardPodio.className='resultado-card';
   [{num:1,label:'🥇 Campeón'},{num:2,label:'🥈 Subcampeón'},{num:3,label:'🥉 3er puesto'},{num:4,label:'4° puesto'}].forEach(p=>{
     const curVal=((resultadosReales.podio)||{})[p.num]||'';
-    const opts=TODOS_LOS_EQUIPOS.map(eq=>`<option value="${eq}" ${curVal===eq?'selected':''}>${(FLAGS[eq]||'')+' '+eq}</option>`).join('');
+    const opts=TODOS_LOS_EQUIPOS.map(eq=>`<option value="${eq}" ${curVal===eq?'selected':''}>${eq}</option>`).join('');
     const row=document.createElement('div');row.style.cssText='display:flex;align-items:center;gap:8px;margin-top:8px';
     row.innerHTML=`<span style="font-size:13px;font-weight:700;width:110px">${p.label}</span>
       <select class="equipo-select" style="flex:1" onchange="guardarPodioReal(${p.num},this.value)">
