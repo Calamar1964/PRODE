@@ -971,35 +971,31 @@ function renderTablaDoble(jugadores) {
     Object.keys(GRUPOS).forEach(g=>html+=`<th>G-${g}<br><span style="font-size:9px;opacity:0.7">1°·2°</span></th>`);
     for(let i=0;i<8;i++) html+=`<th>3°${i+1}</th>`;
     html+='</tr></thead><tbody>';
+    const realTercSet=new Set(rterceros.filter(Boolean));
     jugadores.forEach(j=>{
       html+=`<tr><td class="jugador-col">${j.nombre}</td><td class="pts-col">${j.pts}</td>`;
       Object.keys(GRUPOS).forEach(g=>{
-        const r=rr[g]||{};const p=(j.datos.clasificados||{})[g]||{};
+        const r=rr[g]||{};
+        const p=(j.datos.clasificados||{})[g]||{};
+        const realClasG=new Set([r.pos1,r.pos2,...GRUPOS[g].equipos.filter(eq=>realTercSet.has(eq))].filter(Boolean));
         // pos1
         let cel1;
-        if(!p.pos1) cel1='<td class="cel-nd">—</td>';
-        // Build real classified set for this group (pos1 + pos2 + any tercero from this group)
-        const realTercSet=new Set((resultadosReales.terceros||[]).filter(Boolean));
-        const realClasG=new Set([r.pos1,r.pos2,...(GRUPOS[g].equipos.filter(eq=>realTercSet.has(eq)))].filter(Boolean));
-        // pos1
-        let cel1;
-        if(!p.pos1) cel1='<td class="cel-nd">—</td>';
-        else if(r.pos1&&p.pos1===r.pos1) cel1='<td style="color:#2e7d32;font-weight:900">✓</td>';
-        else if(realClasG.has(p.pos1)) cel1='<td style="color:#1565c0;font-weight:700">✓</td>';
-        else cel1='<td class="cel-no">✗</td>';
+        if(!p.pos1) { cel1='<td class="cel-nd">—</td>'; }
+        else if(r.pos1 && p.pos1===r.pos1) { cel1='<td style="color:#2e7d32;font-weight:900">✓</td>'; }
+        else if(realClasG.has(p.pos1)) { cel1='<td style="color:#1565c0;font-weight:700">✓</td>'; }
+        else { cel1='<td class="cel-no">✗</td>'; }
         // pos2
         let cel2;
-        if(!p.pos2) cel2='<td class="cel-nd">—</td>';
-        else if(r.pos2&&p.pos2===r.pos2) cel2='<td style="color:#2e7d32;font-weight:900">✓</td>';
-        else if(realClasG.has(p.pos2)) cel2='<td style="color:#1565c0;font-weight:700">✓</td>';
-        else cel2='<td class="cel-no">✗</td>';
-        html+=`<td style="padding:2px">${cel1.replace('<td','<div style="display:inline-block"').replace('</td>','</div>')} ${cel2.replace('<td','<div style="display:inline-block"').replace('</td>','</div>')}</td>`;
+        if(!p.pos2) { cel2='<td class="cel-nd">—</td>'; }
+        else if(r.pos2 && p.pos2===r.pos2) { cel2='<td style="color:#2e7d32;font-weight:900">✓</td>'; }
+        else if(realClasG.has(p.pos2)) { cel2='<td style="color:#1565c0;font-weight:700">✓</td>'; }
+        else { cel2='<td class="cel-no">✗</td>'; }
+        html+=`<td style="padding:2px;text-align:center">${cel1.replace(/<td/,'<span style="display:inline-block"').replace(/<\/td>/,'</span>')} ${cel2.replace(/<td/,'<span style="display:inline-block"').replace(/<\/td>/,'</span>')}</td>`;
       });
-      const realT=new Set(rterceros.filter(Boolean));
       for(let i=0;i<8;i++){
         const pred=(j.datos.terceros||[])[i];
         if(!pred) html+='<td class="cel-nd">—</td>';
-        else if(realT.has(pred)) html+='<td class="cel-ok">✓</td>';
+        else if(realTercSet.has(pred)) html+='<td style="color:#1565c0;font-weight:700">✓</td>';
         else html+='<td class="cel-no">✗</td>';
       }
       html+='</tr>';
@@ -1007,7 +1003,7 @@ function renderTablaDoble(jugadores) {
     html+='</tbody></table></div>';
   }
 
-  // Octavos / Cuartos / Semis
+    // Octavos / Cuartos / Semis
   else if(['oct','cuar','semi'].includes(tablaVista)) {
     const keyMap={oct:'octavos',cuar:'cuartos',semi:'semis'};
     const labelMap={oct:'Octavos (16)',cuar:'Cuartos (8)',semi:'Semis (4)'};
