@@ -852,30 +852,44 @@ function calcularPuntos(datos) {
   let pts=0;const rr=resultadosReales;
   for(let i=1;i<=72;i++){if(rr.resultados&&rr.resultados[i]&&datos.resultados&&datos.resultados[i]===rr.resultados[i])pts+=1;}
   if(rr.argentina){PARTIDOS_ARG.forEach(p=>{const real=rr.argentina[p.id];const pred=(datos.argentina||{})[p.id];if(real&&pred&&real.arg===pred.arg&&real.rival===pred.rival)pts+=3;});}
-  if(rr.clasificados){
-    // Build full set of real classified teams per group (pos1 + pos2 + matching tercero)
-    const realTercerosSet=new Set((rr.terceros||[]).filter(Boolean));
-    Object.keys(GRUPOS).forEach(g=>{
-      const real=rr.clasificados[g]||{};
-      const pred=(datos.clasificados||{})[g]||{};
-      // All real classified from this group: pos1, pos2, and pos3 if in real terceros
-      const realClasificados=new Set([real.pos1,real.pos2,...GRUPOS[g].equipos.filter(eq=>realTercerosSet.has(eq))].filter(Boolean));
-      // Check pos1
-      if(pred.pos1){
-        if(pred.pos1===real.pos1) pts+=3; // exact position
-        else if(realClasificados.has(pred.pos1)) pts+=2; // right team wrong pos
+  // 16avos: 2 pts por equipo acertado + 1 pt adicional por posicion exacta
+  if(rr.clasificados || rr.terceros) {
+    const realTercerosSet = new Set((rr.terceros||[]).filter(Boolean));
+    
+    // Check 1os y 2os por grupo
+    Object.keys(GRUPOS).forEach(g => {
+      const real = rr.clasificados ? (rr.clasificados[g]||{}) : {};
+      const pred = (datos.clasificados||{})[g]||{};
+      // Build set of ALL real classified from this group (1°, 2°, and any 3° from this group)
+      const realClasG = new Set([real.pos1, real.pos2, ...GRUPOS[g].equipos.filter(eq=>realTercerosSet.has(eq))].filter(Boolean));
+      
+      // pos1 pronosticado
+      if(pred.pos1 && realClasG.has(pred.pos1)) {
+        pts += 2; // equipo acertado
+        if(pred.pos1 === real.pos1) pts += 1; // posicion exacta
       }
-      // Check pos2
-      if(pred.pos2){
-        if(pred.pos2===real.pos2) pts+=3; // exact position
-        else if(realClasificados.has(pred.pos2)) pts+=2; // right team wrong pos
+      // pos2 pronosticado
+      if(pred.pos2 && realClasG.has(pred.pos2)) {
+        pts += 2; // equipo acertado
+        if(pred.pos2 === real.pos2) pts += 1; // posicion exacta
       }
     });
-  }
-  // Terceros - 2pts each correct, +1 if exact slot match not needed (just in set)
-  if(rr.terceros){
-    const realTercerosSet=new Set((rr.terceros||[]).filter(Boolean));
-    (datos.terceros||[]).filter(Boolean).forEach(eq=>{if(realTercerosSet.has(eq))pts+=2;});
+    
+    // Check 8 terceros pronosticados
+    (datos.terceros||[]).filter(Boolean).forEach(eq => {
+      if(realTercerosSet.has(eq)) {
+        pts += 2; // equipo acertado como tercero
+        pts += 1; // posicion exacta (es tercero en ambos casos)
+      } else {
+        // Check si clasifica como 1° o 2° en algun grupo
+        let clasificaComoOtro = false;
+        Object.keys(GRUPOS).forEach(g => {
+          const real = rr.clasificados ? (rr.clasificados[g]||{}) : {};
+          if(real.pos1===eq || real.pos2===eq) clasificaComoOtro=true;
+        });
+        if(clasificaComoOtro) pts += 2; // clasifico pero no como tercero
+      }
+    });
   }
   [{key:'octavos',p:3},{key:'cuartos',p:4},{key:'semis',p:5}].forEach(({key,p})=>{const realSet=new Set((rr[key]||[]).filter(Boolean));(datos[key]||[]).filter(Boolean).forEach(eq=>{if(realSet.has(eq))pts+=p;});});
   if(rr.podio){const pm={1:10,2:9,3:8,4:7};[1,2,3,4].forEach(i=>{if(rr.podio[i]&&(datos.podio||{})[i]===rr.podio[i])pts+=pm[i];});}
