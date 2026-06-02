@@ -230,7 +230,9 @@ body { font-family: 'Inter', sans-serif; background: var(--fondo); color: var(--
       <li>Elegís el resultado de los 72 partidos del Mundial</li>
       <li>Pronosticás el marcador exacto de los 3 partidos de Argentina</li>
       <li>Elegís quiénes pasan de ronda hasta el campeón</li>
-      <li>Al terminar, revisás tu boleta, la descargás y la enviás</li>
+      <li>Tu progreso se <strong>guarda automáticamente</strong> al avanzar cada etapa</li>
+      <li>Si cerrás la página, volvé a entrar con el <strong>mismo nombre exacto</strong> y retomás donde dejaste</li>
+      <li>Al terminar, revisás tu boleta y la enviás</li>
     </ul></div>
     <div class="info-card"><h3>Tabla de puntos</h3><ul>
       <li><strong>Resultado de partido:</strong> 1 punto</li>
@@ -243,8 +245,9 @@ body { font-family: 'Inter', sans-serif; background: var(--fondo); color: var(--
     <div class="name-section">
       <label>Tu nombre completo</label>
       <input type="text" id="player-name" placeholder="Ej: Juan García" autocomplete="name"/>
+      <p style="font-size:11px;color:var(--gris);margin-top:8px;line-height:1.5">⚠️ Usá siempre el <strong>mismo nombre exacto</strong> para poder retomar tu pronóstico si lo cerrás a mitad.</p>
     </div>
-    <button class="btn-primary" onclick="startGame()">EMPEZAR MI PRONÓSTICO →</button>
+    <button class="btn-primary" onclick="startGame()">EMPEZAR / RETOMAR MI PRONÓSTICO →</button>
   </div>
 </div>
 
@@ -502,6 +505,49 @@ function capturarTerceros() {
   console.log('Terceros capturados:', JSON.stringify(state.terceros));
 }
 
+async function autoGuardar() {
+  if(!state.nombre || !window._fbReady) return;
+  try {
+    const key = state.nombre.trim().toLowerCase().replace(/\s+/g,'_');
+    const datos = {
+      nombre: state.nombre,
+      timestamp: Date.now(),
+      resultados: state.resultados,
+      argentina: state.argentina,
+      clasificados: state.clasificados,
+      terceros: state.terceros,
+      octavos: state.octavos,
+      cuartos: state.cuartos,
+      semis: state.semis,
+      podio: state.podio,
+      puntos: 0,
+      borrador: true
+    };
+    await window._fbSet(window._fbRef(window._fbDb, 'borradores/' + key), datos);
+  } catch(e) { console.log('Autoguardado falló:', e); }
+}
+
+async function cargarBorrador(nombre) {
+  if(!window._fbReady) return false;
+  try {
+    const key = nombre.trim().toLowerCase().replace(/\s+/g,'_');
+    const snap = await window._fbGet(window._fbRef(window._fbDb, 'borradores/' + key));
+    if(snap.exists()) {
+      const datos = snap.val();
+      state.resultados = datos.resultados || {};
+      state.argentina = datos.argentina || {arg1:{arg:0,rival:0},arg2:{arg:0,rival:0},arg3:{arg:0,rival:0}};
+      state.clasificados = datos.clasificados || {};
+      state.terceros = datos.terceros || Array(8).fill('');
+      state.octavos = datos.octavos || Array(16).fill('');
+      state.cuartos = datos.cuartos || Array(8).fill('');
+      state.semis = datos.semis || Array(4).fill('');
+      state.podio = datos.podio || {1:'',2:'',3:'',4:''};
+      return true;
+    }
+  } catch(e) { console.log('Error cargando borrador:', e); }
+  return false;
+}
+
 function goTo(n) {
   // Always save terceros from DOM before navigating
   capturarTerceros();
@@ -520,6 +566,8 @@ function goTo(n) {
   // Re-render grupos+terceros when returning to screen 5 to show saved values
   if(n===5) { renderGrupos(); renderTerceros(); }
   currentScreen=n; window.scrollTo(0,0); updateProgress();
+  // Autoguardar en segundo plano
+  autoGuardar();
 }
 
 function updateProgress() {
@@ -529,16 +577,31 @@ function updateProgress() {
   document.getElementById('step-label').textContent=currentScreen>0?`Paso ${currentScreen} de 10 — ${labels[currentScreen]}`:'';
 }
 
-function startGame() {
+async function startGame() {
   const nombre=document.getElementById('player-name').value.trim();
   if(!nombre){alert('Por favor ingresá tu nombre.');return;}
   state.nombre=nombre;
+
+  // Try to load existing draft
+  const btn = document.querySelector('button[onclick="startGame()"]');
+  if(btn) { btn.disabled=true; btn.textContent='Cargando...'; }
+  
+  const tieneBorrador = await cargarBorrador(nombre);
+  
+  if(btn) { btn.disabled=false; btn.textContent='EMPEZAR / RETOMAR MI PRONÓSTICO →'; }
+
   renderMatches(); renderArgentina(); renderGrupos();
   renderTerceros();
   renderEquiposLista('octavos-grid',16,'octavos');
   renderEquiposLista('cuartos-grid',8,'cuartos');
   renderEquiposLista('semis-grid',4,'semis');
-  renderPodio(); goTo(1);
+  renderPodio();
+  
+  if(tieneBorrador) {
+    updateCounters();
+    alert('✅ Retomaste tu pronóstico. Todo lo que habías completado está guardado.');
+  }
+  goTo(1);
 }
 
 function renderMatches() {
