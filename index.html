@@ -586,22 +586,23 @@ function renderArgentina() {
   container.innerHTML='';
   PARTIDOS_ARG.forEach(p => {
     const sc=state.argentina[p.id];
-    const argLabel=p.argLocal?'🇦🇷 Argentina':'🇦🇷 Argentina (visit.)';
-    const rivLabel=p.rival.toUpperCase();
-    const argKey=p.argLocal?'arg':'rival';
-    const rivKey=p.argLocal?'rival':'arg';
+    // Always show Argentina on left, rival on right, regardless of home/away
+    // argKey always maps to Argentina's goals, rivKey to rival's goals
+    const argKey='arg';
+    const rivKey='rival';
     const card=document.createElement('div');card.className='arg-match-card';
-    card.innerHTML=`<div class="arg-match-header">Partido ${p.n} · ${p.f}${!p.argLocal?' (Argentina juega de visitante)':''}</div>
-      <div style="padding:10px 14px;font-size:14px;font-weight:700">Argentina vs ${p.rival}</div>
+    const visitLabel = !p.argLocal ? ' · Argentina de visitante' : '';
+    card.innerHTML=`<div class="arg-match-header">Partido ${p.n} · ${p.f}${visitLabel}</div>
+      <div style="padding:10px 14px;font-size:14px;font-weight:700">🇦🇷 Argentina vs ${p.rival}</div>
       <div class="score-inputs">
-        <div><div class="score-team-label">${argLabel}</div>
+        <div><div class="score-team-label">🇦🇷 ARG</div>
           <div class="score-stepper">
             <button class="stepper-btn" onclick="changeScore('${p.id}','${argKey}',-1)">−</button>
             <input class="stepper-val" id="${p.id}-${argKey}" value="${sc[argKey]}" type="number" min="0" oninput="scoreInput('${p.id}','${argKey}',this.value)">
             <button class="stepper-btn" onclick="changeScore('${p.id}','${argKey}',1)">+</button>
           </div></div>
         <div class="score-dash">:</div>
-        <div><div class="score-team-label">${rivLabel}</div>
+        <div><div class="score-team-label">${p.rival.toUpperCase()}</div>
           <div class="score-stepper">
             <button class="stepper-btn" onclick="changeScore('${p.id}','${rivKey}',-1)">−</button>
             <input class="stepper-val" id="${p.id}-${rivKey}" value="${sc[rivKey]}" type="number" min="0" oninput="scoreInput('${p.id}','${rivKey}',this.value)">
@@ -751,8 +752,9 @@ function buildBoleta(datos,nombre) {
   html+=`<div class="boleta-section"><div class="boleta-section-title">🇦🇷 Argentina — marcadores exactos</div>`;
   PARTIDOS_ARG.forEach(p=>{
     const sc=argentina[p.id]||{arg:0,rival:0};
-    const marcador=p.argLocal?`${sc.arg} - ${sc.rival}`:`${sc.rival} - ${sc.arg}`;
-    html+=`<div class="boleta-arg-row"><span>Argentina vs ${p.rival}</span><span class="boleta-arg-score">${marcador}</span></div>`;
+    // Always show Argentina score first, then rival
+    const marcador=`ARG ${sc.arg} - ${sc.rival} ${p.rival}`;
+    html+=`<div class="boleta-arg-row"><span>🇦🇷 vs ${p.rival}${!p.argLocal?' (visitante)':''}</span><span class="boleta-arg-score">${marcador}</span></div>`;
   });
   html+='</div>';
   [1,2,3].forEach(etapa=>{
