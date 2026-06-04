@@ -330,7 +330,7 @@ body { font-family: 'Inter', sans-serif; background: var(--fondo); color: var(--
     <p id="resumen-nombre-txt">Revisá todo antes de enviar</p>
   </div>
   <div class="send-warning">⚠️ <strong>Todavía no enviaste tu pronóstico.</strong> Revisá tu boleta y tocá el botón azul para enviarlo.</div>
-  <div style="padding:10px 12px 0">
+  <div class="edit-nav-section" style="padding:10px 12px 0">
     <div style="font-size:12px;font-weight:800;color:#0a1628;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px">✏️ Ir a corregir:</div>
     <div style="display:flex;flex-wrap:wrap;gap:6px">
       <button onclick="goTo(1)" style="padding:7px 12px;background:white;border:2px solid #0a1628;border-radius:8px;font-family:Inter,sans-serif;font-size:12px;font-weight:700;color:#0a1628;cursor:pointer">Jornada 1</button>
@@ -365,6 +365,7 @@ body { font-family: 'Inter', sans-serif; background: var(--fondo); color: var(--
     <div class="ranking-subtitle">PRODE USA 2026 by ADLT</div>
     <div class="ranking-live">● EN VIVO</div>
   </div>
+  <div id="ranking-lock-notice"></div>
   <div class="ranking-toggle">
     <button class="toggle-btn active" id="toggle-simple" onclick="setRankingView('simple')">📋 Ranking</button>
     <button class="toggle-btn" id="toggle-tabla" onclick="setRankingView('tabla')">📊 Tabla completa</button>
@@ -599,7 +600,11 @@ async function startGame() {
   
   if(tieneBorrador) {
     updateCounters();
-    alert('✅ Retomaste tu pronóstico. Todo lo que habías completado está guardado.');
+    if(puedeEditar()) {
+      alert('✅ Retomaste tu pronóstico. Todo lo que habías completado está guardado.');
+    } else {
+      alert('⏰ El plazo de carga venció el 7/6. Solo podés ver tu pronóstico.');
+    }
   }
   goTo(1);
 }
@@ -774,6 +779,18 @@ function renderPodio() {
 function setPodio(num,val) {state.podio[num]=val;}
 
 function mostrarBoleta() {
+  // Show/hide edit controls based on deadline
+  const puedeEd = puedeEditar();
+  const editNav = document.querySelector('.edit-nav-section');
+  if(editNav) editNav.style.display = puedeEd ? 'block' : 'none';
+  const sendBtn = document.querySelector('button[onclick="enviarPronóstico()"]');
+  if(sendBtn) {
+    if(!puedeEd) {
+      sendBtn.disabled = true;
+      sendBtn.textContent = '⏰ Plazo de carga vencido (7/6 23:59 hs)';
+      sendBtn.style.background = '#999';
+    }
+  }
   // Capture all current DOM values before building boleta
   // Terceros - read from DOM if on screen 5, otherwise use state
   capturarTerceros();
@@ -849,6 +866,18 @@ function buildBoleta(datos,nombre) {
   return html;
 }
 
+// Date controls
+const FECHA_CIERRE = new Date('2026-06-08T02:59:00Z'); // 7 Jun 23:59 BsAs
+const FECHA_MUNDIAL = new Date('2026-06-11T03:00:00Z'); // 11 Jun 00:00 BsAs
+
+function puedeEditar() {
+  return new Date() < FECHA_CIERRE;
+}
+
+function puedeVerBoletas() {
+  return new Date() >= FECHA_MUNDIAL;
+}
+
 let pronosticoEnviado = false;
 
 async function enviarPronóstico() {
@@ -864,7 +893,8 @@ async function enviarPronóstico() {
     semis:state.semis,podio:state.podio,puntos:0};
   if(window._fbReady) {
     try {
-      const key=state.nombre.replace(/\s+/g,'_')+'_'+Date.now();
+      // Use nombre as key so re-sending always overwrites previous submission
+      const key=state.nombre.trim().toLowerCase().replace(/\s+/g,'_');
       await window._fbSet(window._fbRef(window._fbDb,'pronosticos/'+key),datos);
       pronosticoEnviado=true;
       if(btn) { btn.textContent='✅ Pronóstico enviado'; btn.style.background='#2e7d32'; }
@@ -962,6 +992,15 @@ function calcularPuntos(datos) {
 }
 
 async function loadRanking() {
+  // Show lock notice
+  const notice = document.getElementById('ranking-lock-notice');
+  if(notice) {
+    if(!puedeVerBoletas()) {
+      notice.innerHTML='<div style="background:#fff8e1;border:1px solid #f0c030;padding:10px 16px;font-size:13px;color:#7a5000;text-align:center">🔒 Las boletas se revelan el <strong>11 de junio</strong> cuando empieza el Mundial</div>';
+    } else if(!puedeEditar()) {
+      notice.innerHTML='<div style="background:#e8f5e9;padding:10px 16px;font-size:13px;color:#2e7d32;text-align:center">✅ El plazo de carga venció. ¡Ya podés ver las boletas de todos!</div>';
+    }
+  }
   if(!window._fbReady){document.getElementById('ranking-body').innerHTML='<div class="ranking-empty">⚙️ Firebase no configurado.</div>';return;}
   try{const snapR=await window._fbGet(window._fbRef(window._fbDb,'resultados'));if(snapR.exists())resultadosReales=snapR.val();}catch(e){}
   window._fbOnValue(window._fbRef(window._fbDb,'pronosticos'),snap=>{
@@ -981,11 +1020,14 @@ function renderRankingList(jugadores) {
   let html='<div class="ranking-list">';
   jugadores.forEach((j,idx)=>{
     const cls=posCls[idx]||'pos-other';
-    html+=`<div class="ranking-row" onclick="verJugador('${j.key}')">
+    const puedeVer = puedeVerBoletas() || adminLoggedIn;
+    const lockIcon = puedeVer ? '›' : '🔒';
+    const clickable = puedeVer ? `onclick="verJugador('${j.key}')"` : '';
+    html+=`<div class="ranking-row" ${clickable} style="${puedeVer?'':'cursor:default'}">
       <div class="ranking-pos ${cls}">${idx+1}</div>
       <div><div class="ranking-name">${j.nombre}</div><div style="font-size:11px;color:var(--gris)">${Object.values(j.datos.resultados||{}).filter(Boolean).length} partidos</div></div>
       <div style="text-align:right"><div class="ranking-pts">${j.pts}</div><div class="ranking-pts-label">puntos</div></div>
-      <div class="ranking-arrow">›</div></div>`;
+      <div class="ranking-arrow">${lockIcon}</div></div>`;
   });
   html+='</div>';
   body.innerHTML=html;
@@ -1036,6 +1078,38 @@ function renderTablaDoble(jugadores) {
     });
     html+='</tbody></table></div>';
     html+=`<p style="font-size:11px;color:var(--gris);text-align:center;padding:8px">Jornada ${jNum} · ${partidosJugados.length} de 24 partidos jugados</p>`;
+
+    // Calcular ganador de la jornada
+    if(partidosJugados.length > 0) {
+      const argIdJornada = {1:'arg1', 2:'arg2', 3:'arg3'}[jNum];
+      const ptsJornada = jugadores.map(j => {
+        let p = 0;
+        // Puntos de los partidos de esta jornada
+        partidosFiltro.forEach(partido => {
+          const real = (resultadosReales.resultados||{})[partido.n];
+          const pred = (j.datos.resultados||{})[partido.n];
+          if(real && pred && real === pred) p += 1;
+        });
+        // Puntos del marcador exacto de Argentina en esta jornada
+        const raArg = (resultadosReales.argentina||{})[argIdJornada];
+        const predArg = (j.datos.argentina||{})[argIdJornada];
+        if(raArg && predArg && raArg.arg === predArg.arg && raArg.rival === predArg.rival) p += 3;
+        return {nombre: j.nombre, pts: p};
+      });
+      const maxPts = Math.max(...ptsJornada.map(x => x.pts));
+      if(maxPts > 0) {
+        const ganadores = ptsJornada.filter(x => x.pts === maxPts).map(x => x.nombre);
+        const emoji = ganadores.length > 1 ? '🤝' : '🏆';
+        const label = ganadores.length > 1 ? 'Empate en Jornada' : 'Ganador Jornada';
+        html+=`<div style="background:linear-gradient(135deg,#0a1628,#1a2a4a);color:white;margin:8px 10px;border-radius:10px;padding:14px 16px;text-align:center">
+          <div style="font-size:11px;opacity:0.7;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">${emoji} ${label} ${jNum}</div>
+          <div style="font-size:17px;font-weight:800">${ganadores.join(' · ')}</div>
+          <div style="font-size:13px;opacity:0.8;margin-top:2px">${maxPts} puntos en la jornada</div>
+        </div>`;
+      } else {
+        html+=`<div style="text-align:center;padding:10px;font-size:12px;color:var(--gris)">Aún no hay puntos en esta jornada</div>`;
+      }
+    }
   }
 
   // Clasificados a 16avos
@@ -1175,6 +1249,10 @@ function cambiarVistaTabla(vista) {
 function cambiarJornada(n) { cambiarVistaTabla('j'+n); }
 
 function verJugador(key) {
+  if(!puedeVerBoletas() && !adminLoggedIn) {
+    alert('🔒 Las boletas de los demás jugadores se revelan el 11 de junio cuando empieza el Mundial.');
+    return;
+  }
   viewingJugador=key;const datos=rankingData[key];if(!datos)return;
   const body=document.getElementById('ranking-body');
   body.innerHTML=`<div class="jugador-detail">
