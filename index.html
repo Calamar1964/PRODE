@@ -868,10 +868,17 @@ function buildBoleta(datos,nombre) {
 
 // Date controls
 const FECHA_CIERRE = new Date('2026-06-08T02:59:00Z'); // 7 Jun 23:59 BsAs
+const VENTANA_APERTURA = new Date('2026-06-08T16:00:00Z'); // 8 Jun 13:00 BsAs
+const VENTANA_CIERRE = new Date('2026-06-08T21:00:00Z'); // 8 Jun 18:00 BsAs
 const FECHA_MUNDIAL = new Date('2026-06-11T03:00:00Z'); // 11 Jun 00:00 BsAs
 
 function puedeEditar() {
-  return new Date() < FECHA_CIERRE;
+  const ahora = new Date();
+  // Ventana normal hasta el 7/6 23:59
+  if(ahora < FECHA_CIERRE) return true;
+  // Ventana especial 8/6 13:00 a 18:00 BsAs
+  if(ahora >= VENTANA_APERTURA && ahora < VENTANA_CIERRE) return true;
+  return false;
 }
 
 function puedeVerBoletas() {
