@@ -247,7 +247,20 @@ body { font-family: 'Inter', sans-serif; background: var(--fondo); color: var(--
       <input type="text" id="player-name" placeholder="Ej: Juan García" autocomplete="name"/>
       <p style="font-size:11px;color:var(--gris);margin-top:8px;line-height:1.5">⚠️ Usá siempre el <strong>mismo nombre exacto</strong> para poder retomar tu pronóstico si lo cerrás a mitad.</p>
     </div>
-    <button class="btn-primary" onclick="startGame()">EMPEZAR / RETOMAR MI PRONÓSTICO →</button>
+    <div id="start-btn-wrap">
+      <button class="btn-primary" onclick="startGame()">EMPEZAR / RETOMAR MI PRONÓSTICO →</button>
+    </div>
+    <script>
+      if(!puedeEditar()) {
+        document.getElementById('start-btn-wrap').innerHTML = 
+          '<div style="background:#1a2a4a;color:white;border-radius:12px;padding:16px;text-align:center;margin-top:14px">' +
+          '<div style="font-size:15px;font-weight:800">⏰ El plazo de carga venció</div>' +
+          '<div style="font-size:13px;opacity:0.8;margin-top:6px">Podés ver tu pronóstico ingresando tu nombre</div>' +
+          '<input type="text" id="player-name-view" placeholder="Tu nombre exacto" style="width:100%;padding:12px;font-size:16px;border-radius:8px;border:none;margin-top:10px;font-family:Inter,sans-serif">' +
+          '<button onclick="verMiBoleta()" style="width:100%;padding:13px;background:#B22234;color:white;border:none;border-radius:8px;font-family:Inter,sans-serif;font-size:14px;font-weight:800;cursor:pointer;margin-top:8px">VER MI PRONÓSTICO</button>' +
+          '</div>';
+      }
+    </script>
   </div>
 </div>
 
@@ -553,6 +566,15 @@ async function cargarBorrador(nombre) {
 }
 
 function goTo(n) {
+  // If deadline passed, only allow screen 0 and screen 10 (boleta)
+  if(!puedeEditar() && n > 0 && n < 10) {
+    // Redirect to boleta if they have one, otherwise stay on screen 0
+    if(state.nombre && Object.keys(state.resultados).length > 0) {
+      n = 10;
+    } else {
+      return;
+    }
+  }
   // Always save terceros from DOM before navigating
   capturarTerceros();
   // Also save clasificados
@@ -579,6 +601,36 @@ function updateProgress() {
   document.getElementById('progress-fill').style.width=Math.round((currentScreen/10)*100)+'%';
   const labels=['','Jornada 1','Jornada 2','Jornada 3','Extra Argentina','Clasificados 16avos','Octavos','Cuartos','Semifinales','Los 4 primeros','Tu boleta'];
   document.getElementById('step-label').textContent=currentScreen>0?`Paso ${currentScreen} de 10 — ${labels[currentScreen]}`:'';
+}
+
+async function verMiBoleta() {
+  const input = document.getElementById('player-name-view');
+  if(!input) return;
+  const nombre = input.value.trim();
+  if(!nombre) { alert('Ingresá tu nombre exacto.'); return; }
+  state.nombre = nombre;
+  const btn = input.nextElementSibling;
+  if(btn) { btn.textContent = 'Buscando...'; btn.disabled = true; }
+  const encontrado = await cargarBorrador(nombre);
+  if(encontrado) {
+    renderMatches(); renderArgentina(); renderGrupos(); renderTerceros();
+    renderEquiposLista('octavos-grid',16,'octavos');
+    renderEquiposLista('cuartos-grid',8,'cuartos');
+    renderEquiposLista('semis-grid',4,'semis');
+    renderPodio();
+    document.getElementById('resumen-nombre-txt').textContent=`${state.nombre}, tu pronóstico está cerrado`;
+    document.getElementById('boleta-preview').innerHTML=buildBoleta(state,state.nombre);
+    const sendBtn = document.querySelector('button[onclick="enviarPronóstico()"]');
+    if(sendBtn) { sendBtn.disabled=true; sendBtn.textContent='⏰ Plazo de carga vencido (7/6 23:59 hs)'; sendBtn.style.background='#999'; }
+    const editNav = document.querySelector('.edit-nav-section');
+    if(editNav) editNav.style.display='none';
+    const warning = document.querySelector('.send-warning');
+    if(warning) { warning.style.background='#e8f5e9'; warning.style.borderColor='#2e7d32'; warning.style.color='#2e7d32'; warning.innerHTML='✅ Tu pronóstico fue enviado. El plazo de carga venció el 7/6 a las 23:59 hs.'; }
+    goTo(10);
+  } else {
+    alert('No encontramos un pronóstico con ese nombre. Verificá que sea exactamente igual al que usaste.');
+    if(btn) { btn.textContent='VER MI PRONÓSTICO'; btn.disabled=false; }
+  }
 }
 
 async function startGame() {
@@ -651,6 +703,7 @@ function renderMatches() {
 }
 
 function setResult(n,val,etapa) {
+  if(!puedeEditar()) return;
   state.resultados[n]=val;
   const card=document.getElementById('mc-'+n);if(!card)return;
   const btns=card.querySelectorAll('.match-btn');
@@ -702,6 +755,7 @@ function renderArgentina() {
 }
 
 function changeScore(id,team,delta) {
+  if(!puedeEditar()) return;
   let v=(state.argentina[id][team]||0)+delta;if(v<0)v=0;
   state.argentina[id][team]=v;
   const el=document.getElementById(id+'-'+team);if(el)el.value=v;
@@ -760,8 +814,9 @@ function renderTerceros() {
   container.appendChild(sec);
 }
 
-function setClasificado(g,pos,val) {if(!state.clasificados[g])state.clasificados[g]={};state.clasificados[g][pos]=val;}
+function setClasificado(g,pos,val) {if(!puedeEditar())return;if(!state.clasificados[g])state.clasificados[g]={};state.clasificados[g][pos]=val;}
 function setTercero(idx,val) {
+  if(!puedeEditar()) return;
   state.terceros[idx]=val;
   console.log('Tercero '+idx+' = '+val, state.terceros);
 }
@@ -778,7 +833,7 @@ function renderEquiposLista(containerId,count,stateKey) {
     container.appendChild(row);
   }
 }
-function setEquipo(key,idx,val) {state[key][idx]=val;}
+function setEquipo(key,idx,val) {if(!puedeEditar())return;state[key][idx]=val;}
 
 function renderPodio() {
   const container=document.getElementById('podio-section');
@@ -796,7 +851,7 @@ function renderPodio() {
     container.appendChild(card);
   });
 }
-function setPodio(num,val) {state.podio[num]=val;}
+function setPodio(num,val) {if(!puedeEditar())return;state.podio[num]=val;}
 
 function mostrarBoleta() {
   // Show/hide edit controls based on deadline
