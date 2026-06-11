@@ -389,6 +389,9 @@ body { font-family: 'Inter', sans-serif; background: var(--fondo); color: var(--
         <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:1px">Panel de Resultados</div>
         <div style="font-size:12px;opacity:0.8;margin-top:2px">Cargá el resultado real de cada partido y etapa</div>
       </div>
+      <button onclick="descargarTodasLasBoletas()" style="width:100%;padding:14px;background:#B22234;color:white;border:none;border-radius:10px;font-family:'Inter',sans-serif;font-size:14px;font-weight:800;cursor:pointer;margin-bottom:14px">
+        📥 Descargar todas las boletas (PDF)
+      </button>
     </div>
     <div id="admin-partidos"></div>
   </div>
@@ -598,13 +601,30 @@ async function startGame() {
   renderEquiposLista('semis-grid',4,'semis');
   renderPodio();
   
+  if(!puedeEditar()) {
+    // Plazo vencido - mostrar boleta directamente sin pasar por edición
+    if(tieneBorrador) {
+      document.getElementById('resumen-nombre-txt').textContent=`${state.nombre}, tu pronóstico está cerrado`;
+      document.getElementById('boleta-preview').innerHTML=buildBoleta(state,state.nombre);
+      // Hide edit controls
+      const sendBtn = document.querySelector('button[onclick="enviarPronóstico()"]');
+      if(sendBtn) { sendBtn.disabled=true; sendBtn.textContent='⏰ Plazo de carga vencido (7/6 23:59 hs)'; sendBtn.style.background='#999'; }
+      const editNav = document.querySelector('.edit-nav-section');
+      if(editNav) editNav.style.display='none';
+      const warning = document.querySelector('.send-warning');
+      if(warning) { warning.style.background='#e8f5e9'; warning.style.borderColor='#2e7d32'; warning.style.color='#2e7d32'; warning.innerHTML='✅ Tu pronóstico fue enviado. El plazo de carga venció el 7/6 a las 23:59 hs.'; }
+      goTo(10);
+    } else {
+      alert('⏰ El plazo de carga venció el 7/6 a las 23:59 hs. No encontramos un pronóstico registrado con este nombre.');
+      const btn = document.querySelector('button[onclick="startGame()"]');
+      if(btn) { btn.disabled=false; btn.textContent='EMPEZAR / RETOMAR MI PRONÓSTICO →'; }
+    }
+    return;
+  }
+
   if(tieneBorrador) {
     updateCounters();
-    if(puedeEditar()) {
-      alert('✅ Retomaste tu pronóstico. Todo lo que habías completado está guardado.');
-    } else {
-      alert('⏰ El plazo de carga venció el 7/6. Solo podés ver tu pronóstico.');
-    }
+    alert('✅ Retomaste tu pronóstico. Todo lo que habías completado está guardado.');
   }
   goTo(1);
 }
@@ -1270,6 +1290,116 @@ function verJugador(key) {
 function volverRanking() {viewingJugador=null;loadRanking();}
 
 // ADMIN
+function descargarTodasLasBoletas() {
+  if(!Object.keys(rankingData).length) {
+    alert('No hay pronósticos cargados todavía.');
+    return;
+  }
+
+  // Build full HTML with all boletas
+  let html = `<!DOCTYPE html><html lang="es"><head>
+    <meta charset="UTF-8">
+    <title>Todas las boletas - PRODE USA 2026</title>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+      body { font-family: Inter, sans-serif; background: white; color: #1a1a1a; }
+      .boleta-container { max-width: 700px; margin: 0 auto 40px; border: 1px solid #ccc; border-radius: 8px; overflow: hidden; page-break-after: always; }
+      .boleta-header { background: linear-gradient(135deg,#0a1628,#1a2a4a); color: white; padding: 20px; text-align: center; }
+      .boleta-title { font-family: 'Bebas Neue',sans-serif; font-size: 24px; letter-spacing: 2px; }
+      .boleta-jugador { font-size: 18px; font-weight: 800; margin-top: 6px; }
+      .boleta-section { padding: 10px 14px; border-bottom: 1px solid #eee; }
+      .boleta-section-title { font-size: 11px; font-weight: 800; color: #0a1628; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+      .boleta-row { display: flex; justify-content: space-between; padding: 3px 0; border-bottom: 1px solid #f5f5f5; font-size: 12px; }
+      .boleta-footer { background: #f4f1eb; padding: 8px; text-align: center; font-size: 10px; color: #999; }
+      @media print { .boleta-container { page-break-after: always; } }
+    </style>
+  </head><body>`;
+
+  const jugadores = Object.values(rankingData).sort((a,b) => a.nombre.localeCompare(b.nombre));
+
+  jugadores.forEach(datos => {
+    const r = datos.resultados || {};
+    const argentina = datos.argentina || {};
+    const podio = datos.podio || {};
+    const octavos = datos.octavos || [];
+    const cuartos = datos.cuartos || [];
+    const semis = datos.semis || [];
+    const clasificados = datos.clasificados || {};
+    const terceros = datos.terceros || [];
+
+    html += `<div class="boleta-container">
+      <div class="boleta-header">
+        <div class="boleta-title">⚽ PRODE USA 2026 · by ADLT</div>
+        <div class="boleta-jugador">👤 ${datos.nombre}</div>
+      </div>`;
+
+    // Podio
+    html += `<div class="boleta-section"><div class="boleta-section-title">🏆 Podio final</div>`;
+    ['Campeón','Subcampeón','3er puesto','4° puesto'].forEach((l,i) => {
+      html += `<div class="boleta-row"><span>${['🥇','🥈','🥉','4°'][i]} ${l}</span><span><b>${podio[i+1]||'—'}</b></span></div>`;
+    });
+    html += '</div>';
+
+    // Argentina
+    html += `<div class="boleta-section"><div class="boleta-section-title">🇦🇷 Argentina — marcadores exactos</div>`;
+    PARTIDOS_ARG.forEach(p => {
+      const sc = argentina[p.id] || {arg:0,rival:0};
+      html += `<div class="boleta-row"><span>vs ${p.rival}${!p.argLocal?' (visit.)':''}</span><span><b>ARG ${sc.arg} - ${sc.rival} ${p.rival}</b></span></div>`;
+    });
+    html += '</div>';
+
+    // Partidos grupos
+    [1,2,3].forEach(etapa => {
+      const inicio = (etapa-1)*24;
+      const partidos = PARTIDOS.slice(inicio, inicio+24);
+      html += `<div class="boleta-section"><div class="boleta-section-title">Etapa ${etapa} — Partidos ${inicio+1}–${inicio+24}</div>`;
+      partidos.forEach(p => {
+        const res = r[p.n];
+        let resTxt = '—';
+        if(res==='L') resTxt = p.l;
+        else if(res==='E') resTxt = 'Empate';
+        else if(res==='V') resTxt = p.e;
+        html += `<div class="boleta-row"><span>${p.n}. ${p.l} vs ${p.e}</span><span><b>${resTxt}</b></span></div>`;
+      });
+      html += '</div>';
+    });
+
+    // Clasificados
+    html += `<div class="boleta-section"><div class="boleta-section-title">Clasificados — 1° y 2° por grupo</div>`;
+    Object.keys(GRUPOS).forEach(g => {
+      const cl = clasificados[g] || {};
+      html += `<div class="boleta-row"><span>Grupo ${g}</span><span>1°: ${cl.pos1||'—'} · 2°: ${cl.pos2||'—'}</span></div>`;
+    });
+    html += '</div>';
+
+    // Terceros
+    html += `<div class="boleta-section"><div class="boleta-section-title">8 Mejores Terceros</div>`;
+    html += `<div style="font-size:12px;padding:4px 0">${terceros.filter(Boolean).join(' · ')||'—'}</div></div>`;
+
+    // Octavos/Cuartos/Semis
+    [['Octavos',octavos],['Cuartos',cuartos],['Semis',semis]].forEach(([label,arr]) => {
+      html += `<div class="boleta-section"><div class="boleta-section-title">${label}</div>`;
+      html += `<div style="font-size:12px;padding:4px 0">${arr.filter(Boolean).join(' · ')||'—'}</div></div>`;
+    });
+
+    html += `<div class="boleta-footer">PRODE USA 2026 by ADLT · Alfredo "El Calamar" De La Torre</div></div>`;
+  });
+
+  html += '</body></html>';
+
+  // Download as HTML file (can be printed as PDF from browser)
+  const blob = new Blob([html], {type: 'text/html'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'PRODE_USA_2026_Todas_las_boletas.html';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  alert('✅ Archivo descargado. Abrilo en el navegador y usá Ctrl+P para imprimir o guardar como PDF.');
+}
+
 function adminLogin() {
   if(document.getElementById('admin-pass').value===ADMIN_PASSWORD){
     document.getElementById('admin-login-screen').style.display='none';
