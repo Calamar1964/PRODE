@@ -250,17 +250,6 @@ body { font-family: 'Inter', sans-serif; background: var(--fondo); color: var(--
     <div id="start-btn-wrap">
       <button class="btn-primary" onclick="startGame()">EMPEZAR / RETOMAR MI PRONÓSTICO →</button>
     </div>
-    <script>
-      if(!puedeEditar()) {
-        document.getElementById('start-btn-wrap').innerHTML = 
-          '<div style="background:#1a2a4a;color:white;border-radius:12px;padding:16px;text-align:center;margin-top:14px">' +
-          '<div style="font-size:15px;font-weight:800">⏰ El plazo de carga venció</div>' +
-          '<div style="font-size:13px;opacity:0.8;margin-top:6px">Podés ver tu pronóstico ingresando tu nombre</div>' +
-          '<input type="text" id="player-name-view" placeholder="Tu nombre exacto" style="width:100%;padding:12px;font-size:16px;border-radius:8px;border:none;margin-top:10px;font-family:Inter,sans-serif">' +
-          '<button onclick="verMiBoleta()" style="width:100%;padding:13px;background:#B22234;color:white;border:none;border-radius:8px;font-family:Inter,sans-serif;font-size:14px;font-weight:800;cursor:pointer;margin-top:8px">VER MI PRONÓSTICO</button>' +
-          '</div>';
-      }
-    </script>
   </div>
 </div>
 
@@ -402,9 +391,22 @@ body { font-family: 'Inter', sans-serif; background: var(--fondo); color: var(--
         <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:1px">Panel de Resultados</div>
         <div style="font-size:12px;opacity:0.8;margin-top:2px">Cargá el resultado real de cada partido y etapa</div>
       </div>
-      <button onclick="descargarTodasLasBoletas()" style="width:100%;padding:14px;background:#B22234;color:white;border:none;border-radius:10px;font-family:'Inter',sans-serif;font-size:14px;font-weight:800;cursor:pointer;margin-bottom:14px">
+      <button onclick="descargarTodasLasBoletas()" style="width:100%;padding:14px;background:#B22234;color:white;border:none;border-radius:10px;font-family:'Inter',sans-serif;font-size:14px;font-weight:800;cursor:pointer;margin-bottom:10px">
         📥 Descargar todas las boletas (PDF)
       </button>
+      <div style="background:#fff8e1;border:1px solid #f0c030;border-radius:10px;padding:12px 14px;margin-bottom:14px">
+        <div style="font-size:13px;font-weight:800;color:#7a5000;margin-bottom:8px">✏️ Editar pronóstico de un jugador</div>
+        <select id="admin-jugador-select" class="equipo-select" style="width:100%;margin-bottom:8px">
+          <option value="">— Seleccionar jugador —</option>
+        </select>
+        <button onclick="adminEditarJugador()" style="width:100%;padding:12px;background:#0a1628;color:white;border:none;border-radius:8px;font-family:'Inter',sans-serif;font-size:13px;font-weight:800;cursor:pointer">EDITAR PRONÓSTICO</button>
+      </div>
+      <div id="admin-editor-wrap" style="display:none">
+        <div style="background:#e8f5e9;border:1px solid #2e7d32;border-radius:10px;padding:12px 14px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center">
+          <span id="admin-editor-label" style="font-size:13px;font-weight:800;color:#2e7d32"></span>
+          <button onclick="adminGuardarEdicion()" style="padding:10px 16px;background:#2e7d32;color:white;border:none;border-radius:8px;font-family:'Inter',sans-serif;font-size:13px;font-weight:800;cursor:pointer">💾 GUARDAR CAMBIOS</button>
+        </div>
+      </div>
     </div>
     <div id="admin-partidos"></div>
   </div>
@@ -566,9 +568,8 @@ async function cargarBorrador(nombre) {
 }
 
 function goTo(n) {
-  // If deadline passed, only allow screen 0 and screen 10 (boleta)
-  if(!puedeEditar() && n > 0 && n < 10) {
-    // Redirect to boleta if they have one, otherwise stay on screen 0
+  // If deadline passed, only allow screen 0 and screen 10 (boleta) - unless admin is editing
+  if(!puedeEditar() && !window._adminEditing && n > 0 && n < 10) {
     if(state.nombre && Object.keys(state.resultados).length > 0) {
       n = 10;
     } else {
@@ -703,7 +704,7 @@ function renderMatches() {
 }
 
 function setResult(n,val,etapa) {
-  if(!puedeEditar()) return;
+  if(!puedeEditar() && !window._adminEditing) return;
   state.resultados[n]=val;
   const card=document.getElementById('mc-'+n);if(!card)return;
   const btns=card.querySelectorAll('.match-btn');
@@ -755,7 +756,7 @@ function renderArgentina() {
 }
 
 function changeScore(id,team,delta) {
-  if(!puedeEditar()) return;
+  if(!puedeEditar() && !window._adminEditing) return;
   let v=(state.argentina[id][team]||0)+delta;if(v<0)v=0;
   state.argentina[id][team]=v;
   const el=document.getElementById(id+'-'+team);if(el)el.value=v;
@@ -814,9 +815,9 @@ function renderTerceros() {
   container.appendChild(sec);
 }
 
-function setClasificado(g,pos,val) {if(!puedeEditar())return;if(!state.clasificados[g])state.clasificados[g]={};state.clasificados[g][pos]=val;}
+function setClasificado(g,pos,val) {if(!puedeEditar()&&!window._adminEditing)return;if(!state.clasificados[g])state.clasificados[g]={};state.clasificados[g][pos]=val;}
 function setTercero(idx,val) {
-  if(!puedeEditar()) return;
+  if(!puedeEditar() && !window._adminEditing) return;
   state.terceros[idx]=val;
   console.log('Tercero '+idx+' = '+val, state.terceros);
 }
@@ -833,7 +834,7 @@ function renderEquiposLista(containerId,count,stateKey) {
     container.appendChild(row);
   }
 }
-function setEquipo(key,idx,val) {if(!puedeEditar())return;state[key][idx]=val;}
+function setEquipo(key,idx,val) {if(!puedeEditar()&&!window._adminEditing)return;state[key][idx]=val;}
 
 function renderPodio() {
   const container=document.getElementById('podio-section');
@@ -851,7 +852,7 @@ function renderPodio() {
     container.appendChild(card);
   });
 }
-function setPodio(num,val) {if(!puedeEditar())return;state.podio[num]=val;}
+function setPodio(num,val) {if(!puedeEditar()&&!window._adminEditing)return;state.podio[num]=val;}
 
 function mostrarBoleta() {
   // Show/hide edit controls based on deadline
@@ -1345,6 +1346,92 @@ function verJugador(key) {
 function volverRanking() {viewingJugador=null;loadRanking();}
 
 // ADMIN
+function adminCargarJugadores() {
+  const sel = document.getElementById('admin-jugador-select');
+  if(!sel) return;
+  sel.innerHTML = '<option value="">— Seleccionar jugador —</option>';
+  Object.entries(rankingData).sort((a,b)=>a[1].nombre.localeCompare(b[1].nombre)).forEach(([key, datos]) => {
+    const opt = document.createElement('option');
+    opt.value = key;
+    opt.textContent = datos.nombre;
+    sel.appendChild(opt);
+  });
+}
+
+let adminEditKey = null;
+
+function adminEditarJugador() {
+  const sel = document.getElementById('admin-jugador-select');
+  if(!sel || !sel.value) { alert('Seleccioná un jugador primero.'); return; }
+  const key = sel.value;
+  const datos = rankingData[key];
+  if(!datos) { alert('No se encontró el pronóstico.'); return; }
+
+  adminEditKey = key;
+  // Load player state for editing
+  state.nombre = datos.nombre;
+  state.resultados = JSON.parse(JSON.stringify(datos.resultados || {}));
+  state.argentina = JSON.parse(JSON.stringify(datos.argentina || {arg1:{arg:0,rival:0},arg2:{arg:0,rival:0},arg3:{arg:0,rival:0}}));
+  state.clasificados = JSON.parse(JSON.stringify(datos.clasificados || {}));
+  state.terceros = JSON.parse(JSON.stringify(datos.terceros || Array(8).fill('')));
+  state.octavos = JSON.parse(JSON.stringify(datos.octavos || Array(16).fill('')));
+  state.cuartos = JSON.parse(JSON.stringify(datos.cuartos || Array(8).fill('')));
+  state.semis = JSON.parse(JSON.stringify(datos.semis || Array(4).fill('')));
+  state.podio = JSON.parse(JSON.stringify(datos.podio || {1:'',2:'',3:'',4:''}));
+
+  // Show editor
+  document.getElementById('admin-editor-wrap').style.display = 'block';
+  document.getElementById('admin-editor-label').textContent = '✏️ Editando: ' + datos.nombre;
+
+  // Re-render all screens with loaded data
+  renderMatches(); renderArgentina(); renderGrupos(); renderTerceros();
+  renderEquiposLista('octavos-grid',16,'octavos');
+  renderEquiposLista('cuartos-grid',8,'cuartos');
+  renderEquiposLista('semis-grid',4,'semis');
+  renderPodio();
+  updateCounters();
+
+  // Switch to Mi Prode tab and go to step 1
+  switchTab('prode');
+  // Temporarily allow editing even after deadline
+  window._adminEditing = true;
+  goTo(1);
+  alert('Editá el pronóstico de ' + datos.nombre + ' y cuando termines volvé al panel Admin y tocá GUARDAR CAMBIOS.');
+}
+
+async function adminGuardarEdicion() {
+  if(!adminEditKey) { alert('No hay ningún jugador siendo editado.'); return; }
+  capturarTerceros();
+
+  const datos = {
+    nombre: state.nombre,
+    timestamp: Date.now(),
+    resultados: state.resultados,
+    argentina: state.argentina,
+    clasificados: state.clasificados,
+    terceros: state.terceros,
+    octavos: state.octavos,
+    cuartos: state.cuartos,
+    semis: state.semis,
+    podio: state.podio,
+    puntos: 0
+  };
+
+  if(window._fbReady) {
+    try {
+      await window._fbSet(window._fbRef(window._fbDb, 'pronosticos/' + adminEditKey), datos);
+      await window._fbSet(window._fbRef(window._fbDb, 'borradores/' + adminEditKey), datos);
+      rankingData[adminEditKey] = datos;
+      alert('✅ Cambios guardados para ' + state.nombre);
+      document.getElementById('admin-editor-wrap').style.display = 'none';
+      adminEditKey = null;
+      window._adminEditing = false;
+    } catch(e) {
+      alert('Error al guardar: ' + e.message);
+    }
+  }
+}
+
 function descargarTodasLasBoletas() {
   if(!Object.keys(rankingData).length) {
     alert('No hay pronósticos cargados todavía.');
@@ -1460,6 +1547,14 @@ function adminLogin() {
     document.getElementById('admin-login-screen').style.display='none';
     document.getElementById('admin-panel-screen').style.display='block';
     renderAdminPanel();
+  // Load jugadores for edit dropdown after rankingData is available
+  setTimeout(() => {
+    if(window._fbReady) {
+      window._fbGet(window._fbRef(window._fbDb,'pronosticos')).then(snap => {
+        if(snap.exists()) { rankingData = snap.val(); adminCargarJugadores(); }
+      });
+    }
+  }, 1000);
   } else alert('Contraseña incorrecta');
 }
 
@@ -1612,6 +1707,22 @@ async function guardarPodioReal(num,val) {
   resultadosReales.podio[num]=val;
   if(window._fbReady) await window._fbSet(window._fbRef(window._fbDb,'resultados/podio/'+num),val);
 }
+
+// Check deadline on page load - after all functions are defined
+window.addEventListener('load', () => {
+  if(!puedeEditar()) {
+    const wrap = document.getElementById('start-btn-wrap');
+    if(wrap) {
+      wrap.innerHTML =
+        '<div style="background:#1a2a4a;color:white;border-radius:12px;padding:16px;text-align:center;margin-top:14px">' +
+        '<div style="font-size:15px;font-weight:800">⏰ El plazo de carga venció</div>' +
+        '<div style="font-size:13px;opacity:0.8;margin-top:6px">Podés ver tu pronóstico ingresando tu nombre</div>' +
+        '<input type="text" id="player-name-view" placeholder="Tu nombre exacto" style="width:100%;padding:12px;font-size:16px;border-radius:8px;border:none;margin-top:10px;font-family:Inter,sans-serif;color:#1a1a1a">' +
+        '<button onclick="verMiBoleta()" style="width:100%;padding:13px;background:#B22234;color:white;border:none;border-radius:8px;font-family:Inter,sans-serif;font-size:14px;font-weight:800;cursor:pointer;margin-top:8px">VER MI PRONÓSTICO</button>' +
+        '</div>';
+    }
+  }
+});
 </script>
 </body>
 </html>
