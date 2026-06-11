@@ -513,6 +513,13 @@ function switchTab(tab) {
     document.getElementById('tab-'+t+'-content').style.display=t===tab?'block':'none';
   });
   if(tab==='ranking') loadRanking();
+  if(tab==='admin' && adminLoggedIn) {
+    if(window._fbReady) {
+      window._fbGet(window._fbRef(window._fbDb,'pronosticos')).then(snap => {
+        if(snap.exists()) { rankingData = snap.val(); adminCargarJugadores(); }
+      });
+    }
+  }
   updateProgress();
 }
 
@@ -1547,14 +1554,12 @@ function adminLogin() {
     document.getElementById('admin-login-screen').style.display='none';
     document.getElementById('admin-panel-screen').style.display='block';
     renderAdminPanel();
-  // Load jugadores for edit dropdown after rankingData is available
-  setTimeout(() => {
-    if(window._fbReady) {
-      window._fbGet(window._fbRef(window._fbDb,'pronosticos')).then(snap => {
-        if(snap.exists()) { rankingData = snap.val(); adminCargarJugadores(); }
-      });
-    }
-  }, 1000);
+  // Load jugadores for edit dropdown
+  if(window._fbReady) {
+    window._fbGet(window._fbRef(window._fbDb,'pronosticos')).then(snap => {
+      if(snap.exists()) { rankingData = snap.val(); adminCargarJugadores(); }
+    }).catch(e => console.log('Error cargando jugadores:', e));
+  }
   } else alert('Contraseña incorrecta');
 }
 
